@@ -1,0 +1,37 @@
+# =============================================================================
+# Simama — Local Development Infrastructure (Docker Compose)
+# =============================================================================
+# Hybrid architecture: only infrastructure services run in Docker.
+# PHP, Composer, and NPM run natively on the WSL host for maximum performance.
+#
+# Usage:
+#   docker compose -f docker-compose.local.yml up -d       # Start
+#   docker compose -f docker-compose.local.yml down         # Stop
+#   docker compose -f docker-compose.local.yml down -v      # Stop + delete data
+# =============================================================================
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: {{APP_NAME}}-mysql-local
+    environment:
+      MYSQL_DATABASE: {{APP_NAME}}
+      MYSQL_USER: {{APP_NAME}}
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      # Bind to loopback only — PHP on WSL connects via 127.0.0.1:3306
+      - "127.0.0.1:3306:3306"
+    volumes:
+      # Named volume keeps data outside the repo directory
+      - {{APP_NAME}}_mysql_local:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin status -uroot --password=\"$$MYSQL_ROOT_PASSWORD\" 2>/dev/null | grep -q Uptime"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  {{APP_NAME}}_mysql_local:

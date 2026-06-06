@@ -1,0 +1,62 @@
+# ── Build artifacts (always excluded) ─────────────────────────────────────────
+# vendor/ and public/build/ are produced inside Docker by dedicated build stages
+# (composer-deps, node-builder). Excluding them keeps the build context lean
+# and prevents accidental stale files from the runner entering the image.
+node_modules/
+vendor/
+public/build/
+.npm/
+npm-debug.log*
+
+# ── Git & VCS ──────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Environment & secrets ──────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Development tools & config ─────────────────────────────────────────────────
+# NOTE: vite.config.js and tailwind.config.js are intentionally NOT excluded.
+# The node-builder stage inside the Dockerfile must COPY them to run npm build.
+# Excluding them here would cause a build failure.
+.editorconfig
+.styleci.yml
+phpunit.xml
+phpstan.neon*
+pint.json
+playwright.config.ts
+
+# ── Tests ──────────────────────────────────────────────────────────────────────
+tests/
+.github/
+
+# ── Documentation ─────────────────────────────────────────────────────────────
+*.md
+CHANGELOG*
+README*
+
+# ── Logs & temporary files ─────────────────────────────────────────────────────
+storage/logs/*.log
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# ── Docker files (not needed inside the image) ────────────────────────────────
+docker-compose*.yml
+Dockerfile*
+
+# ── CI/CD ──────────────────────────────────────────────────────────────────────
+deploy.sh
+setup-local.sh
+
+# ── Development artifacts (not needed in production) ──────────────────────────
+scratch/
+docs/
+scripts/
+githooks/
+docker/mysql-data/
+enterprise_data/
+enterprise_cache/
