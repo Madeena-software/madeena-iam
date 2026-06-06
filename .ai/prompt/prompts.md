@@ -95,7 +95,13 @@ At the end of every session:
 
 ---
 
+## Active Remediation Roadmap
+To complete the implementation gaps identified during the PRD audit, refer to the step-by-step prompts indexed in [remediation/README.md](file:///var/www/madeena-iam/.ai/prompt/remediation/README.md).
+
+---
+
 ## Prompt Templates
+
 
 ### Starting a New Feature
 ```
