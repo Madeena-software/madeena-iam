@@ -1,0 +1,67 @@
+{
+  "project": "Madeena IAM",
+  "tech_stack": {
+    "backend": {
+      "language": "PHP 8.4",
+      "framework": "Laravel 13",
+      "admin_panel": "Filament v5",
+      "key_dependencies": [
+        "laravel/passport",
+        "bezhansalleh/filament-shield",
+        "pxlrbt/filament-spotlight",
+        "spatie/laravel-activitylog",
+        "spatie/laravel-permission"
+      ]
+    },
+    "frontend": {
+      "bundler": "Vite 8",
+      "css_framework": "Tailwind CSS v4",
+      "js_framework": "Alpine.js"
+    },
+    "database": {
+      "type": "MySQL 8.4 (Local via Docker port 3310)",
+      "isolation": "Completely separate DB instance, sharing zero credentials/tables with client apps",
+      "fallback": "SQLite"
+    },
+    "infrastructure": {
+      "local": "Hybrid (WSL host PHP + Docker Compose DB)",
+      "production": "Docker Swarm"
+    }
+  },
+  "external_integrations": {
+    "storage": "WebDAV Storage / S3 Gateway Configuration",
+    "sso_clients": [
+      "simama",
+      "madeena-workspace",
+      "madeena-erp",
+      "madeena-it"
+    ]
+  },
+  "modules": [
+    "Users (Identity & Status Approval Flow)",
+    "OAuth Clients Registry (Laravel Passport)",
+    "Access Provisioning (client_user Pivot)",
+    "Audit Trails (login_activities & Activitylog)",
+    "API Authentication (Direct API login/register)",
+    "Single Sign-On (OIDC prompt=none silent check)",
+    "Session Management (Remote session revocation)"
+  ],
+  "github_workflows": [
+    "deploy-swarm.yml",
+    "server-setup-db.yml",
+    "server-setup-deploy.yml",
+    "server-admin-reset.yml",
+    "tests.yml",
+    "update-changelog.yml"
+  ],
+  "testing": {
+    "framework": "PHPUnit 12.5.12",
+    "helpers": [
+      "Mockery 1.6",
+      "Faker 1.23"
+    ],
+    "strategy": "Test Pyramid (10% E2E, 30% Feature, 60% Unit)"
+  },
+  "bugs_fixed_history": [],
+  "ai_bootstrapped": true
+}
