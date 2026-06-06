@@ -16,6 +16,11 @@ class CheckClientAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $prompt = $request->string('prompt')->explode(' ')->map(trim(...))->filter()->values();
+        if ($prompt->contains('none')) {
+            return $next($request);
+        }
+
         $clientId = $request->input('client_id');
 
         if ($clientId && $request->user()) {

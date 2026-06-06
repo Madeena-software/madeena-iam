@@ -11,6 +11,12 @@ class OauthClient extends PassportClient
 
     protected $casts = [
         'is_active' => 'boolean',
+        'grant_types' => 'array',
+        'scopes' => 'array',
+        'redirect_uris' => 'array',
+        'personal_access_client' => 'bool',
+        'password_client' => 'bool',
+        'revoked' => 'bool',
     ];
 
     protected static function booted()
