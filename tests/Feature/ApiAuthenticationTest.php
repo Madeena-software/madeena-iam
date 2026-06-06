@@ -128,6 +128,7 @@ class ApiAuthenticationTest extends TestCase
         $response = $this->postJson('/api/v1/auth/login', $payload);
 
         $response->assertStatus(200)
+            ->assertCookie(config('session.cookie'))
             ->assertJsonStructure([
                 'access_token',
                 'user' => [
