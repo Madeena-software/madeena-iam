@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\OauthClients\Schemas;
 
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
@@ -28,9 +28,9 @@ class OauthClientForm
                             return function (string $attribute, $value, \Closure $fail) {
                                 $uris = array_map('trim', explode(',', $value));
                                 foreach ($uris as $uri) {
-                                    if (!filter_var($uri, FILTER_VALIDATE_URL)) {
+                                    if (! filter_var($uri, FILTER_VALIDATE_URL)) {
                                         $fail("The URI {$uri} is invalid.");
-                                    } elseif (!str_starts_with($uri, 'https://') && !str_starts_with($uri, 'http://localhost') && !str_starts_with($uri, 'http://127.0.0.1')) {
+                                    } elseif (! str_starts_with($uri, 'https://') && ! str_starts_with($uri, 'http://localhost') && ! str_starts_with($uri, 'http://127.0.0.1')) {
                                         $fail("The URI {$uri} must use HTTPS.");
                                     }
                                 }

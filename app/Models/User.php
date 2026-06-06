@@ -3,27 +3,26 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Laravel\Passport\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Spatie\Activitylog\Models\Concerns\LogsActivity;
-use Spatie\Activitylog\Support\LogOptions;
-use App\Enums\UserStatus;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\HasApiTokens;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasUuids, SoftDeletes, HasApiTokens, HasRoles, LogsActivity;
+    use HasApiTokens, HasFactory, HasRoles, HasUuids, LogsActivity, Notifiable, SoftDeletes;
 
     protected function casts(): array
     {
@@ -52,7 +51,6 @@ class User extends Authenticatable implements FilamentUser
         return LogOptions::defaults()
             ->logOnly(['name', 'email'])
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
             ->dontLogIfAttributesChangedOnly(['password', 'remember_token']);
     }
 
@@ -64,9 +62,9 @@ class User extends Authenticatable implements FilamentUser
     public function clients()
     {
         return $this->belongsToMany(OauthClient::class, 'client_user', 'user_id', 'client_id')
-                    ->using(ClientUser::class)
-                    ->withPivot(['status', 'approved_at', 'approved_by', 'is_blocked', 'client_app_user_id'])
-                    ->withTimestamps();
+            ->using(ClientUser::class)
+            ->withPivot(['status', 'approved_at', 'approved_by', 'is_blocked', 'client_app_user_id'])
+            ->withTimestamps();
     }
 
     public function canAccessPanel(Panel $panel): bool

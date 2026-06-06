@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Models\OauthClient;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -22,28 +22,31 @@ class AuthController extends Controller
         ]);
 
         $client = OauthClient::where('id', $request->client_id)
-            ->where('secret', $request->client_secret)
             ->where('is_active', true)
             ->first();
 
-        if (!$client) {
+        if (! $client || ! Hash::check($request->client_secret, $client->secret)) {
             return response()->json(['message' => 'Invalid client credentials'], 401);
         }
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Invalid user credentials'], 401);
-        }
-
-        if ($user->status !== 'approved') {
-            return response()->json(['message' => 'User account is not approved or is suspended'], 403);
         }
 
         // Verify client access in pivot table
         $clientUser = $user->clients()->wherePivot('client_id', $client->id)->first();
-        if (!$clientUser || $clientUser->pivot->is_blocked) {
+        if (! $clientUser) {
             return response()->json(['message' => 'User is not authorized for this application'], 403);
+        }
+
+        if ($clientUser->pivot->status !== UserStatus::APPROVED) {
+            return response()->json(['message' => 'User account is not approved or is suspended for this application'], 403);
+        }
+
+        if ($clientUser->pivot->is_blocked) {
+            return response()->json(['message' => 'User is blocked from accessing this application'], 403);
         }
 
         // Silent SSO Hook: Log the user into the web guard to establish session cookie
@@ -63,7 +66,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'status' => $user->status,
+                'status' => $clientUser->pivot->status->value,
             ],
             'sso_session_id' => session()->getId(),
         ]);
@@ -80,11 +83,10 @@ class AuthController extends Controller
         ]);
 
         $client = OauthClient::where('id', $request->client_id)
-            ->where('secret', $request->client_secret)
             ->where('is_active', true)
             ->first();
 
-        if (!$client) {
+        if (! $client || ! Hash::check($request->client_secret, $client->secret)) {
             return response()->json(['message' => 'Invalid client credentials'], 401);
         }
 
@@ -92,12 +94,11 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'status' => 'pending_approval',
         ]);
 
         // Attach user to client
         $user->clients()->attach($client->id, [
-            'status' => 'pending',
+            'status' => UserStatus::PENDING_APPROVAL->value,
             'is_blocked' => false,
             'created_at' => now(),
             'updated_at' => now(),
@@ -105,7 +106,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User registered successfully. Awaiting approval.',
-            'status' => 'pending_approval'
+            'status' => 'pending_approval',
         ], 201);
     }
 }

@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('logout_at')->nullable();
             $table->boolean('cleared_by_user')->default(false);
             $table->json('location')->nullable();
-            
+
             $table->index(['authenticatable_id', 'authenticatable_type'], 'auth_logs_auth_id_auth_type_idx');
         });
     }

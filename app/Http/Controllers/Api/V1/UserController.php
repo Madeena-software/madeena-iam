@@ -11,14 +11,16 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        // Get the token's client id
         $token = $user->token();
-        $clientId = $token ? $token->client_id : null;
-
         $clientRegistration = null;
 
-        if ($clientId) {
-            $pivot = $user->clients()->wherePivot('client_id', $clientId)->first();
+        if ($token) {
+            $pivot = $user->clients()->wherePivot('client_id', $token->client_id)->first();
+
+            if (! $pivot && $token->name) {
+                $pivot = $user->clients()->where('name', $token->name)->first();
+            }
+
             if ($pivot) {
                 $clientRegistration = [
                     'status' => $pivot->pivot->status,
@@ -33,8 +35,8 @@ class UserController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'status' => $user->status,
-            'avatar_url' => $user->avatar_url,
+            'status' => $clientRegistration ? $clientRegistration['status'] : null,
+            'avatar_url' => null,
             'app_registration' => $clientRegistration,
         ]);
     }

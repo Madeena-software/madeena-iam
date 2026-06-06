@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Laravel\Passport\Client as PassportClient;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Passport\Client as PassportClient;
 
 class OauthClient extends PassportClient
 {
@@ -30,8 +30,8 @@ class OauthClient extends PassportClient
     public function users()
     {
         return $this->belongsToMany(User::class, 'client_user', 'client_id', 'user_id')
-                    ->using(ClientUser::class)
-                    ->withPivot(['status', 'approved_at', 'approved_by', 'is_blocked', 'client_app_user_id'])
-                    ->withTimestamps();
+            ->using(ClientUser::class)
+            ->withPivot(['status', 'approved_at', 'approved_by', 'is_blocked', 'client_app_user_id'])
+            ->withTimestamps();
     }
 }

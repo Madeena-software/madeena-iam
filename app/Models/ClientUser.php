@@ -22,9 +22,17 @@ class ClientUser extends Pivot
     {
         static::creating(function ($model) {
             $model->created_by = auth()->id();
+            if ($model->status === UserStatus::APPROVED) {
+                $model->approved_at = now();
+                $model->approved_by = auth()->id();
+            }
         });
         static::updating(function ($model) {
             $model->updated_by = auth()->id();
+            if ($model->isDirty('status') && $model->status === UserStatus::APPROVED) {
+                $model->approved_at = now();
+                $model->approved_by = auth()->id();
+            }
         });
         static::deleting(function ($model) {
             $model->deleted_by = auth()->id();

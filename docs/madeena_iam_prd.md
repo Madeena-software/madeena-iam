@@ -208,11 +208,7 @@ Central user directory.
 * `id` (UUID)
 * `name` (string)
 * `email` (string, unique)
-* `password` (string, nullable for social-only users)
-* `status` (string, default: 'pending_approval' — options: 'pending_approval', 'approved', 'suspended')
-* `approved_at` (timestamp, nullable)
-* `approved_by` (UUID, nullable, reference to admin user)
-* `avatar_url` (string, nullable)
+* `password` (string)
 * `remember_token` (string, nullable)
 * `created_at` / `updated_at`
 
@@ -231,6 +227,10 @@ Defines user access rules to apps.
 * `id` (bigint, primary key)
 * `user_id` (foreign key to `users`)
 * `client_id` (foreign key to `oauth_clients`)
+* `client_app_user_id` (string, nullable)
+* `status` (string, default: 'pending_approval' — options: 'pending_approval', 'approved', 'suspended')
+* `approved_at` (timestamp, nullable)
+* `approved_by` (UUID, nullable, reference to admin user)
 * `is_blocked` (boolean, default false)
 * `created_at` / `updated_at`
 

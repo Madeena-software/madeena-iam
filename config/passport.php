@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CheckClientAccess;
+
 return [
 
     /*
@@ -16,7 +18,7 @@ return [
     'guard' => 'web',
 
     'middleware' => [
-        \App\Http\Middleware\CheckClientAccess::class,
+        CheckClientAccess::class,
     ],
 
     /*

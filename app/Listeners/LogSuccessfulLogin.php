@@ -2,9 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Models\AuthenticationLog;
 use Illuminate\Auth\Events\Login;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 
 class LogSuccessfulLogin
 {
@@ -25,7 +24,7 @@ class LogSuccessfulLogin
         $ip = request()->ip();
         $userAgent = request()->userAgent();
 
-        \App\Models\AuthenticationLog::create([
+        AuthenticationLog::create([
             'authenticatable_type' => get_class($user),
             'authenticatable_id' => $user->id,
             'ip_address' => $ip,
