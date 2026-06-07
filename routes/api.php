@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DeviceSessionController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -22,5 +23,15 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:api')->group(function () {
         Route::get('/user', [UserController::class, 'show']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+    });
+
+    Route::middleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        'auth:api',
+    ])->group(function () {
+        Route::get('/sessions', [DeviceSessionController::class, 'index']);
+        Route::delete('/sessions/{id}', [DeviceSessionController::class, 'destroy']);
     });
 });
