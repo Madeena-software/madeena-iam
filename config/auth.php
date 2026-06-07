@@ -41,6 +41,7 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            'remember' => env('AUTH_REMEMBER_LIFETIME', 43200),
         ],
         'api' => [
             'driver' => 'passport',

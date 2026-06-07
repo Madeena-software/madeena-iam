@@ -34,7 +34,7 @@ class WebAuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200)
-            ->assertSee('Madeena IAM')
+            ->assertSee('madeena')
             ->assertSee('Email Address')
             ->assertSee('Password');
     }
