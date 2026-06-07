@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -46,6 +47,19 @@ class LoginController extends Controller
      */
     public function logout(Request $request): RedirectResponse
     {
+        $user = Auth::guard('web')->user();
+
+        if ($user) {
+            // Revoke all Passport access tokens
+            $user->tokens()->update(['revoked' => true]);
+
+            // Revoke all Passport refresh tokens associated with those access tokens
+            $tokenIds = $user->tokens()->pluck('id');
+            DB::table('oauth_refresh_tokens')
+                ->whereIn('access_token_id', $tokenIds)
+                ->update(['revoked' => true]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

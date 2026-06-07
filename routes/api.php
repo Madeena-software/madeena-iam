@@ -21,5 +21,6 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:api')->group(function () {
         Route::get('/user', [UserController::class, 'show']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
     });
 });

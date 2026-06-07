@@ -6,8 +6,11 @@ use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Models\OauthClient;
 use App\Models\User;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -108,5 +111,39 @@ class AuthController extends Controller
             'message' => 'User registered successfully. Awaiting approval.',
             'status' => 'pending_approval',
         ], 201);
+    }
+
+    /**
+     * Invalidate OAuth tokens and destroy central session.
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user) {
+            // Revoke all Passport access tokens
+            $user->tokens()->update(['revoked' => true]);
+
+            // Revoke all Passport refresh tokens associated with those access tokens
+            $tokenIds = $user->tokens()->pluck('id');
+            DB::table('oauth_refresh_tokens')
+                ->whereIn('access_token_id', $tokenIds)
+                ->update(['revoked' => true]);
+
+            // Log the logout event in the audit trail
+            event(new Logout('api', $user));
+        }
+
+        // Destroy the central browser session via web auth guard
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
     }
 }
