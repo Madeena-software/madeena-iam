@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Http\Controllers\Oauth\AuthorizationController;
+use App\Listeners\LogFailedLogin;
 use App\Listeners\LogSuccessfulLogin;
 use App\Listeners\LogSuccessfulLogout;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\StatefulGuard;
@@ -45,6 +47,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             Logout::class,
             LogSuccessfulLogout::class
+        );
+
+        Event::listen(
+            Failed::class,
+            LogFailedLogin::class
         );
     }
 }

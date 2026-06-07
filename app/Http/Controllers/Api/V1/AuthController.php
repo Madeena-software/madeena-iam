@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuthenticationLog;
 use App\Models\OauthClient;
 use App\Models\User;
+use App\Services\GeoIPService;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,26 +33,91 @@ class AuthController extends Controller
             ->first();
 
         if (! $client || ! Hash::check($request->client_secret, $client->secret)) {
+            AuthenticationLog::create([
+                'authenticatable_type' => null,
+                'authenticatable_id' => null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'login_at' => now(),
+                'login_successful' => false,
+                'client_id' => $request->client_id,
+                'status' => 'invalid_client',
+                'auth_type' => $request->input('auth_type', 'password'),
+                'location' => GeoIPService::resolveLocation($request->ip()),
+            ]);
+
             return response()->json(['message' => 'Invalid client credentials'], 401);
         }
 
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
+            AuthenticationLog::create([
+                'authenticatable_type' => $user ? get_class($user) : null,
+                'authenticatable_id' => $user ? $user->id : null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'login_at' => now(),
+                'login_successful' => false,
+                'client_id' => $client->id,
+                'status' => 'failed_password',
+                'auth_type' => $request->input('auth_type', 'password'),
+                'location' => GeoIPService::resolveLocation($request->ip()),
+            ]);
+
             return response()->json(['message' => 'Invalid user credentials'], 401);
         }
 
         // Verify client access in pivot table
         $clientUser = $user->clients()->wherePivot('client_id', $client->id)->first();
         if (! $clientUser) {
+            AuthenticationLog::create([
+                'authenticatable_type' => get_class($user),
+                'authenticatable_id' => $user->id,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'login_at' => now(),
+                'login_successful' => false,
+                'client_id' => $client->id,
+                'status' => 'blocked_app',
+                'auth_type' => $request->input('auth_type', 'password'),
+                'location' => GeoIPService::resolveLocation($request->ip()),
+            ]);
+
             return response()->json(['message' => 'User is not authorized for this application'], 403);
         }
 
         if ($clientUser->pivot->status !== UserStatus::APPROVED) {
+            AuthenticationLog::create([
+                'authenticatable_type' => get_class($user),
+                'authenticatable_id' => $user->id,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'login_at' => now(),
+                'login_successful' => false,
+                'client_id' => $client->id,
+                'status' => 'blocked_app',
+                'auth_type' => $request->input('auth_type', 'password'),
+                'location' => GeoIPService::resolveLocation($request->ip()),
+            ]);
+
             return response()->json(['message' => 'User account is not approved or is suspended for this application'], 403);
         }
 
         if ($clientUser->pivot->is_blocked) {
+            AuthenticationLog::create([
+                'authenticatable_type' => get_class($user),
+                'authenticatable_id' => $user->id,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'login_at' => now(),
+                'login_successful' => false,
+                'client_id' => $client->id,
+                'status' => 'blocked_app',
+                'auth_type' => $request->input('auth_type', 'password'),
+                'location' => GeoIPService::resolveLocation($request->ip()),
+            ]);
+
             return response()->json(['message' => 'User is blocked from accessing this application'], 403);
         }
 

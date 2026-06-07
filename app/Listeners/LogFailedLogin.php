@@ -6,9 +6,9 @@ namespace App\Listeners;
 
 use App\Models\AuthenticationLog;
 use App\Services\GeoIPService;
-use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Failed;
 
-class LogSuccessfulLogin
+class LogFailedLogin
 {
     /**
      * Create the event listener.
@@ -21,7 +21,7 @@ class LogSuccessfulLogin
     /**
      * Handle the event.
      */
-    public function handle(Login $event): void
+    public function handle(Failed $event): void
     {
         $user = $event->user;
         $ip = request()->ip();
@@ -30,14 +30,14 @@ class LogSuccessfulLogin
         $clientId = $this->getClientId();
 
         AuthenticationLog::create([
-            'authenticatable_type' => get_class($user),
-            'authenticatable_id' => $user->id,
+            'authenticatable_type' => $user ? get_class($user) : null,
+            'authenticatable_id' => $user ? $user->id : null,
             'ip_address' => $ip,
             'user_agent' => $userAgent,
             'login_at' => now(),
-            'login_successful' => true,
+            'login_successful' => false,
             'client_id' => $clientId,
-            'status' => 'success',
+            'status' => 'failed_password',
             'auth_type' => request()->input('auth_type', 'password'),
             'location' => GeoIPService::resolveLocation($ip),
         ]);

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Oauth;
 
 use App\Enums\UserStatus;
+use App\Models\AuthenticationLog;
+use App\Services\GeoIPService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Laravel\Passport\Bridge\User;
@@ -60,6 +62,19 @@ class AuthorizationController extends PassportAuthorizationController
                 && ! $pivot->pivot->is_blocked;
 
             if (! $isPermitted) {
+                AuthenticationLog::create([
+                    'authenticatable_type' => get_class($user),
+                    'authenticatable_id' => $user->id,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'login_at' => now(),
+                    'login_successful' => false,
+                    'client_id' => $clientId,
+                    'status' => 'blocked_app',
+                    'auth_type' => $request->input('auth_type', 'password'),
+                    'location' => GeoIPService::resolveLocation($request->ip()),
+                ]);
+
                 $query = http_build_query([
                     'error' => 'access_denied',
                     'state' => $state,
