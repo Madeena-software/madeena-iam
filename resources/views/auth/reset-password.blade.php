@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sso madeena</title>
+    <title>set password - madeena</title>
     
     <!-- Google Fonts: Inter & Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,24 +76,6 @@
             text-transform: lowercase;
         }
 
-        .header-right {
-            display: flex;
-            gap: 28px;
-        }
-
-        .header-link {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            transition: color 0.2s ease;
-        }
-
-        .header-link:hover {
-            color: #ffffff;
-        }
-
         /* Main Container */
         .main-wrapper {
             flex: 1;
@@ -118,7 +100,7 @@
             }
         }
 
-        /* Login Card */
+        /* Card */
         .login-card {
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -193,26 +175,10 @@
             box-shadow: 0 0 0 4px var(--input-focus-ring);
         }
 
-        /* Remember Me & Checkbox */
-        .checkbox-group {
-            margin-bottom: 24px;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            font-size: 13px;
+        .form-input[readonly] {
+            background-color: var(--page-bg);
             color: var(--text-muted);
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .checkbox-input {
-            margin-right: 10px;
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
-            accent-color: var(--primary-color);
+            cursor: not-allowed;
         }
 
         /* Actions Row */
@@ -220,7 +186,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 28px;
+            margin-top: 28px;
             gap: 16px;
         }
 
@@ -233,6 +199,7 @@
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
+            width: 100%;
             transition: all 0.15s ease;
             box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.1);
         }
@@ -246,67 +213,6 @@
 
         .btn-submit:active {
             transform: translateY(1px);
-        }
-
-        .forgot-link {
-            font-size: 13px;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.15s ease;
-        }
-
-        .forgot-link:hover {
-            color: var(--primary-hover);
-            text-decoration: underline;
-        }
-
-        /* Register Divider */
-        .divider {
-            text-align: center;
-            margin: 24px 0 16px 0;
-            font-size: 13px;
-            color: var(--text-muted);
-            position: relative;
-        }
-
-        .divider::before {
-            content: "";
-            display: block;
-            border-top: 1px solid var(--card-border);
-            position: absolute;
-            top: 50%;
-            width: 100%;
-            z-index: 1;
-        }
-
-        .divider-text {
-            background: #ffffff;
-            padding: 0 12px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .btn-request-access {
-            display: block;
-            width: 100%;
-            text-align: center;
-            background-color: #ffffff;
-            border: 1px solid var(--input-border);
-            color: var(--text-secondary);
-            padding: 12px 20px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 8px;
-            text-decoration: none;
-            box-sizing: border-box;
-            transition: all 0.15s ease;
-        }
-
-        .btn-request-access:hover {
-            background-color: var(--page-bg);
-            border-color: var(--text-muted);
-            color: var(--text-primary);
         }
 
         /* Right Column (Branding & Security Info) */
@@ -333,7 +239,7 @@
 
         .warning-card {
             background-color: #fff;
-            border-left: 4px solid #eab308;
+            border-left: 4px solid var(--primary-color);
             padding: 16px 20px;
             border-radius: 0 8px 8px 0;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
@@ -342,7 +248,7 @@
         .warning-title {
             font-size: 13px;
             font-weight: 700;
-            color: #854d0e;
+            color: var(--primary-color);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 6px;
@@ -351,7 +257,7 @@
         .warning-text {
             font-size: 13px;
             line-height: 1.5;
-            color: #713f12;
+            color: var(--text-secondary);
         }
 
         @media (max-width: 767px) {
@@ -361,7 +267,7 @@
             }
             .warning-card {
                 text-align: left;
-                border-left: 4px solid #eab308;
+                border-left: 4px solid var(--primary-color);
             }
         }
 
@@ -390,19 +296,13 @@
     <main class="main-wrapper">
         <div class="grid-container">
             
-            <!-- Left Column: Login Card -->
+            <!-- Left Column: Reset Card -->
             <div class="login-card">
                 <div class="card-header">
-                    sign in
+                    set password
                 </div>
                 <div class="card-body">
                     
-                    @if (session('status'))
-                        <div class="success-alert" role="alert" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 14px 18px; margin-bottom: 24px; border-radius: 8px; font-size: 13px; line-height: 1.5;">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
                     @if ($errors->any())
                         <div class="error-alert" role="alert">
                             <ul>
@@ -413,8 +313,9 @@
                         </div>
                     @endif
 
-                    <form action="{{ url('/login') }}" method="POST" id="login-form">
+                    <form action="{{ route('password.update') }}" method="POST" id="reset-password-form">
                         @csrf
+                        <input type="hidden" name="token" value="{{ $token }}">
 
                         <div class="form-group">
                             <label for="email" class="form-label">Email Address</label>
@@ -423,43 +324,41 @@
                                 name="email" 
                                 id="email" 
                                 class="form-input" 
-                                value="{{ old('email') }}" 
+                                value="{{ $email ?? old('email') }}" 
                                 required 
-                                autofocus 
-                                autocomplete="email"
+                                readonly
                             >
                         </div>
 
                         <div class="form-group">
-                            <label for="password" class="form-label">Password</label>
+                            <label for="password" class="form-label">New Password</label>
                             <input 
                                 type="password" 
                                 name="password" 
                                 id="password" 
                                 class="form-input" 
                                 required 
-                                autocomplete="current-password"
+                                autofocus
+                                autocomplete="new-password"
                             >
                         </div>
 
-                        <div class="checkbox-group">
-                            <label class="checkbox-label" for="remember">
-                                <input 
-                                    type="checkbox" 
-                                    name="remember" 
-                                    id="remember" 
-                                    class="checkbox-input"
-                                    {{ old('remember') ? 'checked' : '' }}
-                                >
-                                <span class="checkbox-text">Keep me signed in</span>
-                            </label>
+                        <div class="form-group">
+                            <label for="password_confirmation" class="form-label">Confirm New Password</label>
+                            <input 
+                                type="password" 
+                                name="password_confirmation" 
+                                id="password_confirmation" 
+                                class="form-input" 
+                                required 
+                                autocomplete="new-password"
+                            >
                         </div>
 
                         <div class="actions-row">
-                            <button type="submit" class="btn-submit" id="submit-login">
-                                Sign In
+                            <button type="submit" class="btn-submit" id="submit-reset">
+                                Set Password & Activate Account
                             </button>
-                            <a href="#" class="forgot-link">Forgot password?</a>
                         </div>
                     </form>
                 </div>
@@ -467,14 +366,14 @@
 
             <!-- Right Column: Branding & Security Info -->
             <div class="info-column">
-                <h1 class="info-title">Secure Single Sign-On</h1>
+                <h1 class="info-title">Secure Credentials Setup</h1>
                 <p class="info-desc">
-                    Madeena SSO is the central identity provider for your Madeena application services. Sign in with your registered corporate credentials to access all permitted Madeena services.
+                    You're configuring access to Madeena Single Sign-On. Choose a strong, unique password to protect your corporate identity and associated application services.
                 </p>
                 <div class="warning-card">
-                    <div class="warning-title">Security Recommendation</div>
+                    <div class="warning-title">Password Security Policy</div>
                     <div class="warning-text">
-                        For security reasons, please log out and close all browser windows when you are finished accessing protected services, especially on shared or public devices.
+                        Your password should be at least 8 characters long and contain a mix of uppercase and lowercase letters, numbers, and special symbols.
                     </div>
                 </div>
             </div>

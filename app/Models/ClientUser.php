@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Enums\UserStatus;
+use App\Mail\OnboardingMail;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 
 class ClientUser extends Pivot
 {
@@ -27,6 +30,11 @@ class ClientUser extends Pivot
                 $model->approved_by = auth()->id();
             }
         });
+        static::created(function ($model) {
+            if ($model->status === UserStatus::APPROVED) {
+                $model->sendOnboardingEmail();
+            }
+        });
         static::updating(function ($model) {
             $model->updated_by = auth()->id();
             if ($model->isDirty('status') && $model->status === UserStatus::APPROVED) {
@@ -34,10 +42,28 @@ class ClientUser extends Pivot
                 $model->approved_by = auth()->id();
             }
         });
+        static::updated(function ($model) {
+            if ($model->wasChanged('status') && $model->status === UserStatus::APPROVED) {
+                $model->sendOnboardingEmail();
+            }
+        });
         static::deleting(function ($model) {
             $model->deleted_by = auth()->id();
             $model->saveQuietly();
         });
+    }
+
+    public function sendOnboardingEmail(): void
+    {
+        $user = $this->user;
+        if ($user) {
+            $token = Password::createToken($user);
+            $url = route('password.reset', ['token' => $token, 'email' => $user->email]);
+
+            Mail::to($user->email)->queue(
+                new OnboardingMail($user, $url)
+            );
+        }
     }
 
     public function user()

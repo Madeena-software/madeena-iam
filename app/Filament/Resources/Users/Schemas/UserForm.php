@@ -21,7 +21,8 @@ class UserForm
                 DateTimePicker::make('email_verified_at'),
                 TextInput::make('password')
                     ->password()
-                    ->required(),
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->required(fn (string $operation): bool => $operation === 'create'),
                 TextInput::make('created_by'),
                 TextInput::make('updated_by'),
                 TextInput::make('deleted_by'),

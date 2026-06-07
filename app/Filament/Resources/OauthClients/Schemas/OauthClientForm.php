@@ -13,12 +13,24 @@ class OauthClientForm
     {
         return $schema
             ->components([
+                TextInput::make('id')
+                    ->label('Client ID')
+                    ->placeholder('Auto-generated UUID if left blank')
+                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                    ->dehydrated(true)
+                    ->rules(['nullable', 'uuid']),
                 TextInput::make('owner_type'),
                 TextInput::make('owner_id')
                     ->numeric(),
                 TextInput::make('name')
                     ->required(),
-                TextInput::make('secret'),
+                TextInput::make('secret')
+                    ->label('Client Secret')
+                    ->placeholder(fn (string $operation): bool => $operation === 'create' ? 'Auto-generated 40-character string if left blank' : '')
+                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->password()
+                    ->revealable(),
                 TextInput::make('provider'),
                 Textarea::make('redirect_uris')
                     ->required()
