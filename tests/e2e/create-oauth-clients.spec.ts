@@ -113,7 +113,7 @@ test('edit oauth client and reveal secret flow', async ({ page }) => {
   await expect(passwordModal).toBeVisible();
 
   // Fill in incorrect password
-  await page.fill('input[name*="user_password"]', 'wrong-password');
+  await page.fill('input[id*="user_password"]', 'wrong-password');
   // Click Submit (the primary button in the modal action)
   await page.getByRole('button', { name: 'Submit', exact: true }).click();
   
@@ -121,7 +121,7 @@ test('edit oauth client and reveal secret flow', async ({ page }) => {
   await expect(page.locator('text=Incorrect password.')).toBeVisible();
 
   // Fill in correct password
-  await page.fill('input[name*="user_password"]', 'admin');
+  await page.fill('input[id*="user_password"]', 'admin');
   await page.getByRole('button', { name: 'Submit', exact: true }).click();
 
   // Modal should close and the secret should be revealed
