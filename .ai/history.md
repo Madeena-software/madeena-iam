@@ -179,3 +179,25 @@ Make the Activities resource in Filament read-only, enable activity logging for 
 ### Results
 - ✅ **Success**: Activities resource is now fully read-only and lists newest entries first. Activity logging is successfully configured and verified for both OAuth Clients and Client User relations.
 
+## [2026-06-08] Session 9: Activities Logs Display Name, Sorting, and Detail View Layout Formatting
+
+### Objective
+Modify the Filament Activities log table and detail view to show readable names instead of raw UUIDs for Subject and Causer (including pivot models), enable column sorting, and format/pretty-print JSON fields in the detail modal.
+
+### Actions Performed
+1. **Model Upgrades**:
+   - Added a dynamic `getNameAttribute()` method to the `ClientUser` pivot model to construct a human-readable name using user and client relation properties (e.g. `John Doe - Simama App`).
+2. **Table Display and Sorting Enhancements**:
+   - Modified `ActivitiesTable` columns to add custom labels ("Subject" and "Causer" instead of "Subject id" and "Causer id") and formatted their outputs using `formatStateUsing()` to dynamically resolve their polymorphic relation names, falling back to ID if the relation is missing.
+   - Configured all columns (`log_name`, `subject_type`, `subject_id`, `event`, `causer_type`, `causer_id`, `created_at`, `updated_at`) in `ActivitiesTable` to be sortable.
+3. **Detail View Modal Layout Improvements**:
+   - Modified `ActivityForm` to display dynamic polymorphic relation names for Subject and Causer inputs and updated their labels.
+   - Converted `attribute_changes` and `properties` from `TextInput` to `Textarea` components, added full column spanning, and formatted their array values into pretty-printed JSON documents.
+4. **E2E Test Updates**:
+   - Updated Playwright E2E tests in `tests/e2e/activities.spec.ts` to assert that the custom Subject name is correctly displayed in the table and modal instead of its ID, and verified that `attribute_changes` pretty JSON formatting renders correctly in the detail view.
+   - Executed and verified all 3 automated E2E test cases pass successfully.
+
+### Results
+- ✅ **Success**: Activities list and detail modal now display readable model names instead of raw UUIDs, allow column-based sorting, pretty-print JSON attribute changes and properties, and E2E test coverage successfully guards these improvements.
+
+

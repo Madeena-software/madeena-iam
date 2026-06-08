@@ -13,21 +13,30 @@ class ActivitiesTable
         return $table
             ->columns([
                 TextColumn::make('log_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('subject_type')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('subject_id')
-                    ->searchable(),
+                    ->label('Subject')
+                    ->formatStateUsing(fn($record) => $record->subject?->name ?? $record->subject_id)
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('event')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('causer_type')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('causer_id')
-                    ->searchable(),
+                    ->label('Causer')
+                    ->formatStateUsing(fn($record) => $record->causer?->name ?? $record->causer_id)
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

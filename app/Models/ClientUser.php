@@ -97,4 +97,10 @@ class ClientUser extends Pivot
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    public function getNameAttribute(): string
+    {
+        return ($this->user?->name ?? 'Unknown User') . ' - ' . ($this->client?->name ?? 'Unknown Client');
+    }
 }
+

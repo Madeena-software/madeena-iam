@@ -18,8 +18,8 @@
 
 ## 2. Active Goal
  
-- **Goal**: `None`
-- **Objective**: `None`
+- **Goal**: `Activities log display name, sorting, and detail view formatting`
+- **Objective**: `Display Subject and Causer names instead of UUIDs, enable column sorting, and pretty-print JSON fields in the detail modal.`
 
 ---
 
@@ -44,8 +44,9 @@
 - **Milestone 17**: Created and integrated `storage:ensure-s3-bucket` Artisan command into setup/deployment scripts (`deploy-local.sh` and `composer.json`) to auto-create S3 buckets safely during deployment.
 - **Milestone 18**: Configured Playwright and implemented automated E2E tests verifying the redesign and form fields layout, resolving strict mode and FilePond UI selector conflicts.
 - **Milestone 19**: Updated AWS_ENDPOINT configuration to `https://s3.mhcsgo.cloud` in `.env` and `.env.local`, verified connectivity using `storage:ensure-s3-bucket`, and ran full test suites (47 PHPUnit + 1 Playwright E2E test passing).
-- **Milestone 20**: Created [implementation plan](file:///home/faliq/.gemini/antigravity-ide/brain/5c8f7531-98b9-416e-9819-51cda0737380/implementation_plan.md) detailing read-only Activities and activity logging for OauthClient and ClientUser models with Playwright verification.
+- **Milestone 20**: Created implementation plan detailing read-only Activities and activity logging for OauthClient and ClientUser models with Playwright verification.
 - **Milestone 21**: Implemented read-only Filament Activities Resource, added activity logging for `OauthClient` and `ClientUser`, and verified with `activities.spec.ts` Playwright test suite.
+- **Milestone 22**: Replaced raw UUIDs with readable names for Subjects and Causers in the Activities list table and detail modal, enabled column sorting, pretty-printed changes/properties JSON, and verified with updated E2E Playwright test suite.
 
 ---
 
@@ -54,7 +55,7 @@
 - **Database Health**: MySQL 8.4 running locally on port 3310 (configured via `docker-compose.local.yml`).
 - **Application Setup**: Done via `deploy-local.sh`.
 - **Local Dev Server**: Executed via `composer dev`.
-- **Test Suite Status**: 100% Pass (47 PHPUnit tests + 2 Playwright E2E test files passing).
+- **Test Suite Status**: 100% Pass (47 PHPUnit tests + 3 Playwright E2E test cases passing).
 
 ---
 

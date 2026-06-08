@@ -24,11 +24,12 @@ test('activities read-only UI and logging flows', async ({ page }) => {
   await expect(page.locator('button', { hasText: 'Edit' })).toHaveCount(0);
 
   // Assert that View Action exists and can be clicked to open modal
-  const viewAction = page.locator('a', { hasText: 'View' }).first();
+  const viewAction = page.getByRole('button', { name: 'View' }).first();
   if (await viewAction.count() > 0) {
     await viewAction.click();
-    await expect(page.locator('.fi-modal')).toBeVisible();
-    await expect(page.locator('.fi-modal button[type="submit"]')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'View activity' })).toBeVisible();
+    const dialog = page.getByRole('dialog').first();
+    await expect(dialog.locator('button[type="submit"]')).toHaveCount(0);
     // Close the modal
     await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
@@ -63,4 +64,28 @@ test('activities read-only UI and logging flows', async ({ page }) => {
   await page.waitForLoadState('networkidle');
   await expect(page.locator('td', { hasText: 'App\\Models\\OauthClient' }).first()).toBeVisible();
   await expect(page.locator('td', { hasText: 'created' }).first()).toBeVisible();
+
+  // Expect the client name (Subject) to be visible instead of ID
+  await expect(page.locator('td', { hasText: clientName }).first()).toBeVisible();
+
+  // Click View to inspect details modal
+  await page.getByRole('button', { name: 'View' }).first().click();
+  await expect(page.getByRole('heading', { name: 'View activity' })).toBeVisible();
+  const dialog = page.getByRole('dialog').first();
+
+  // Verify Subject input shows client name
+  await expect(dialog.getByLabel('Subject', { exact: true })).toHaveValue(clientName);
+
+  // Verify attribute_changes textarea is populated and contains JSON formatting
+  const changesTextarea = dialog.getByLabel('Attribute changes');
+  await expect(changesTextarea).toBeVisible();
+  const changesValue = await changesTextarea.inputValue();
+  expect(changesValue).toContain('name');
+  expect(changesValue).toContain(clientName);
+  expect(changesValue).toContain('{');
+  expect(changesValue).toContain('}');
+
+  // Close the modal
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
 });
