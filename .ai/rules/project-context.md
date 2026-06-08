@@ -107,45 +107,59 @@ Below are the primary environment variables configured in `.env.example` and `.e
 
 ---
 
-## 6. Proposed Database Schema Design
+## 6. Database Schema Design
 
 ### `users`
-* `id` (UUID)
+* `id` (UUID, Primary Key)
 * `name` (string)
 * `email` (string, unique)
 * `password` (string)
 * `remember_token` (string, nullable)
-* `created_at` / `updated_at`
+* `created_by` / `updated_by` / `deleted_by` (UUID, nullable)
+* `created_at` / `updated_at` / `deleted_at` (timestamp, nullable)
 
 ### `oauth_clients` (Managed by Laravel Passport / Custom attributes)
-* `id` (UUID)
+* `id` (UUID, Primary Key)
 * `name` (string)
-* `secret` (string)
-* `redirect` (text)
+* `secret` (string, nullable)
+* `provider` (string, nullable)
+* `redirect_uris` (text)
+* `grant_types` (text)
+* `revoked` (boolean)
 * `app_logo_path` (string, nullable)
 * `description` (string, nullable)
 * `is_active` (boolean, default true)
+* `owner_type` / `owner_id` (string/bigint, nullable morphs)
+* `created_by` / `updated_by` / `deleted_by` (UUID, nullable)
+* `created_at` / `updated_at` / `deleted_at` (timestamp, nullable)
 
 ### `client_user` (Pivot Table)
 Defines user access rules to apps.
-* `id` (bigint, primary key)
-* `user_id` (foreign key to `users`)
-* `client_id` (foreign key to `oauth_clients`)
+* `id` (bigint, Primary Key)
+* `user_id` (foreignUuid to `users`)
+* `client_id` (foreignUuid to `oauth_clients`)
 * `client_app_user_id` (string, nullable)
-* `status` (string, default: `'pending_approval'` — options: `'pending_approval'`, `'approved'`, `'suspended'`)
+* `status` (enum: `'pending_approval'`, `'approved'`, `'suspended'`, default: `'pending_approval'`)
 * `approved_at` (timestamp, nullable)
-* `approved_by` (UUID, nullable, reference to admin user)
+* `approved_by` (foreignUuid to `users`, nullable)
 * `is_blocked` (boolean, default false)
-* `created_at` / `updated_at`
+* `created_by` / `updated_by` / `deleted_by` (UUID, nullable)
+* `created_at` / `updated_at` / `deleted_at` (timestamp, nullable)
 
-### `login_activities` (Audit trail logs)
-* `id` (bigint, primary key)
-* `user_id` (foreign key to `users`)
-* `client_id` (foreign key to `oauth_clients`, nullable for portal login)
-* `ip_address` (string)
-* `user_agent` (text)
-* `status` (string: e.g., `'success'`, `'failed_password'`, `'blocked_app'`)
-* `created_at` (timestamp)
+### `authentication_logs` (Audit trail logs)
+* `id` (bigint, Primary Key)
+* `authenticatable_id` (UUID, nullable polymorphic relation to `users`)
+* `authenticatable_type` (string, nullable polymorphic relation to `users`)
+* `client_id` (foreignUuid to `oauth_clients`, nullable)
+* `ip_address` (string, 45, nullable)
+* `user_agent` (text, nullable)
+* `login_at` (timestamp, nullable)
+* `logout_at` (timestamp, nullable)
+* `login_successful` (boolean, default false)
+* `cleared_by_user` (boolean, default false)
+* `location` (json, nullable)
+* `status` (string, nullable: e.g. `'success'`, `'failed_password'`, `'blocked_app'`, `'invalid_client'`)
+* `auth_type` (string, nullable: e.g. `'password'`, `'google'`)
 
 ---
 

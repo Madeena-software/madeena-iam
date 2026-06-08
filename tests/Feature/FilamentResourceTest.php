@@ -91,10 +91,7 @@ class FilamentResourceTest extends TestCase
             ->call('create')
             ->assertHasNoFormErrors();
 
-        Mail::assertQueued(OnboardingMail::class, function (OnboardingMail $mail) {
-            return $mail->hasTo('filamentuser@example.com') &&
-                Str::contains($mail->resetUrl, 'password-reset/');
-        });
+        Mail::assertNothingOutgoing();
     }
 
     public function test_onboarding_email_is_queued_on_client_status_approval(): void
