@@ -32,6 +32,7 @@ class OauthClient extends PassportClient
                     if (! empty($attributes['redirect'])) {
                         return explode(',', $attributes['redirect']);
                     }
+
                     return [];
                 }
 

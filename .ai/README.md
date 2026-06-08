@@ -20,7 +20,8 @@ Welcome to the **.ai/ Control Center** for **Madeena IAM**. This directory serve
     ├── project-context.md     # Project overview, key features, and configuration
     ├── laravel-filament.md    # Coding standards for Laravel 13 + Filament v5
     ├── server-access-constraints.md # Infrastructure access policies (no direct SSH)
-    └── testing-pyramid.md     # Testing strategy (10% E2E, 30% Feature, 60% Unit)
+    ├── testing-pyramid.md     # Testing strategy (10% E2E, 30% Feature, 60% Unit)
+    └── browser-agent-restrictions.md # Restrictions on using the browser sub-agent
 ```
 
 ---

@@ -14,7 +14,8 @@ Load the project context before taking any action:
 2. Read `.ai/rules/project-context.md` for tech stack and conventions.
 3. Read `.ai/rules/laravel-filament.md` for stack-specific constraints.
 4. Read `.ai/rules/server-access-constraints.md` for deployment limits.
-5. Check `.ai/history.md` for recent session summaries.
+5. Read `.ai/rules/browser-agent-restrictions.md` for token usage and tool constraints.
+6. Check `.ai/history.md` for recent session summaries.
 
 ### O — Objective
 Clearly define what needs to be accomplished:

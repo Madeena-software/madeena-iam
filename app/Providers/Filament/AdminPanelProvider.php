@@ -40,13 +40,13 @@ class AdminPanelProvider extends PanelProvider
             //                 overflow-x: hidden !important;
             //             }
             //             .fi-main-ctn {
-            //                 transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-            //                             padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-            //                             padding-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+            //                 transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            //                             padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            //                             padding-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1),
             //                             padding-inline-end 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-            //                             margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+            //                             margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
             //                             margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-            //                             margin-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+            //                             margin-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1),
             //                             margin-inline-end 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             //             }
             //         </style>
