@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Passport\Client as PassportClient;
 
 class OauthClient extends PassportClient
@@ -22,13 +23,16 @@ class OauthClient extends PassportClient
     protected static function booted()
     {
         static::creating(function ($model) {
-            $model->created_by = auth()->id();
+            $model->created_by = Auth::id();
+            if (empty($model->provider)) {
+                $model->provider = 'users';
+            }
         });
         static::updating(function ($model) {
-            $model->updated_by = auth()->id();
+            $model->updated_by = Auth::id();
         });
         static::deleting(function ($model) {
-            $model->deleted_by = auth()->id();
+            $model->deleted_by = Auth::id();
             $model->saveQuietly();
         });
     }

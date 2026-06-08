@@ -12,6 +12,7 @@
         "laravel/framework": "^13.8",
         "laravel/passport": "^13.0",
         "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.34",
         "pxlrbt/filament-spotlight": "^2.1",
         "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-permission": "^7.4"
@@ -43,6 +44,7 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php artisan migrate --force",
+            "@php artisan storage:ensure-s3-bucket",
             "npm install --ignore-scripts",
             "npm run build"
         ],

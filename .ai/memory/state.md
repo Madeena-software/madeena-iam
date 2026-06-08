@@ -40,6 +40,9 @@
 - **Milestone 13**: Synced `madeena_iam_prd.md` and `project-context.md` database schemas with migrations.
 - **Milestone 14**: Created the browser-based E2E test prompt document at `.ai/prompt/browser-e2e-testing.md`.
 - **Milestone 15**: Executed browser-based E2E verification test suite (Admin Login, OAuth Client Creation, User Onboarding & Client Pivot, User Portal Login, Audit Log Assertion, and Onboarding Email verification) using the browser subagent, achieving 100% success rate.
+- **Milestone 16**: Redesigned the Filament Create OAuth Client page (hidden ID/secret/owner/provider/audit fields, converted grant_types to CheckboxList with descriptions, converted app_logo_path to S3 FileUpload component).
+- **Milestone 17**: Created and integrated `storage:ensure-s3-bucket` Artisan command into setup/deployment scripts (`deploy-local.sh` and `composer.json`) to auto-create S3 buckets safely during deployment.
+- **Milestone 18**: Configured Playwright and implemented automated E2E tests verifying the redesign and form fields layout, resolving strict mode and FilePond UI selector conflicts.
 
 ---
 
@@ -48,7 +51,7 @@
 - **Database Health**: MySQL 8.4 running locally on port 3310 (configured via `docker-compose.local.yml`).
 - **Application Setup**: Done via `deploy-local.sh`.
 - **Local Dev Server**: Executed via `composer dev`.
-- **Test Suite Status**: 100% Pass (46/46 tests green).
+- **Test Suite Status**: 100% Pass (47/47 PHPUnit + 1/1 Playwright E2E tests green).
 
 ---
 

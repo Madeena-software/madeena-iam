@@ -236,6 +236,10 @@ else
     info "Migrations applied."
 fi
 
+# Ensure S3 Bucket exists
+php artisan storage:ensure-s3-bucket
+info "S3 Bucket verified/created."
+
 # Storage symlink
 php artisan storage:link --force 2>/dev/null || true
 info "Storage symlink created."

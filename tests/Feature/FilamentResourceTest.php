@@ -44,7 +44,7 @@ class FilamentResourceTest extends TestCase
             ->fillForm([
                 'name' => 'Test App Client',
                 'redirect_uris' => 'https://localhost/callback',
-                'grant_types' => 'password,authorization_code',
+                'grant_types' => ['password', 'authorization_code'],
                 'revoked' => false,
                 'is_active' => true,
             ])
@@ -57,6 +57,24 @@ class FilamentResourceTest extends TestCase
         $this->assertStringStartsWith('$2y$', $client->secret);
         $this->assertNotNull($client->plainSecret);
         $this->assertTrue(Hash::check($client->plainSecret, $client->secret));
+        $this->assertEquals(['password', 'authorization_code'], $client->grant_types);
+    }
+
+    public function test_oauth_client_create_form_layout_and_fields(): void
+    {
+        Livewire::test(CreateOauthClient::class)
+            ->assertFormFieldHidden('id')
+            ->assertFormFieldHidden('secret')
+            ->assertFormFieldDoesNotExist('owner_type')
+            ->assertFormFieldDoesNotExist('owner_id')
+            ->assertFormFieldDoesNotExist('provider')
+            ->assertFormFieldDoesNotExist('created_by')
+            ->assertFormFieldDoesNotExist('updated_by')
+            ->assertFormFieldDoesNotExist('deleted_by')
+            ->assertFormFieldExists('name')
+            ->assertFormFieldExists('redirect_uris')
+            ->assertFormFieldExists('grant_types')
+            ->assertFormFieldExists('app_logo_path');
     }
 
     public function test_updating_user_without_password_leaves_old_password_intact(): void
@@ -107,7 +125,7 @@ class FilamentResourceTest extends TestCase
             'name' => 'Test App',
             'secret' => Hash::make('test-secret'),
             'redirect_uris' => 'https://testapp.local/callback',
-            'grant_types' => 'password,authorization_code',
+            'grant_types' => ['password', 'authorization_code'],
             'revoked' => false,
             'is_active' => true,
         ]);
