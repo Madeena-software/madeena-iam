@@ -1,4 +1,4 @@
-# Task Prompt: OAuth Client Resource & Form Redesign
+# Task Prompt: Create OAuth Client Resource & Form Redesign
 
 Use this prompt to execute the refactoring and redesign of the OAuth Client creation and management form in the Filament Admin Panel.
 
