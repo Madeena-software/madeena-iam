@@ -92,6 +92,15 @@ class OauthClient extends PassportClient
             if (empty($model->provider)) {
                 $model->provider = 'users';
             }
+            if (empty($model->owner_type)) {
+                $model->owner_type = 'Company';
+            }
+            if (empty($model->owner_id)) {
+                $defaultOwner = \App\Models\Owner::firstOrCreate(
+                    ['name' => 'PT Madeena Karya Indonesia', 'type' => 'Company']
+                );
+                $model->owner_id = $defaultOwner->id;
+            }
         });
         static::updating(function ($model) {
             $model->updated_by = Auth::id();

@@ -22,12 +22,16 @@ test('create oauth client redesign form flow', async ({ page }) => {
   // 3. Assert fields are hidden (do not exist in DOM)
   await expect(page.locator('[id="form.id"]')).toHaveCount(0);
   await expect(page.locator('[id="form.secret"]')).toHaveCount(0);
-  await expect(page.locator('[id="form.owner_type"]')).toHaveCount(0);
-  await expect(page.locator('[id="form.owner_id"]')).toHaveCount(0);
   await expect(page.locator('[id="form.provider"]')).toHaveCount(0);
   await expect(page.locator('[id="form.created_by"]')).toHaveCount(0);
   await expect(page.locator('[id="form.updated_by"]')).toHaveCount(0);
   await expect(page.locator('[id="form.deleted_by"]')).toHaveCount(0);
+
+  // Assert owner fields exist and are visible
+  const ownerTypeLabel = page.locator('label:has-text("Owner Type")');
+  const ownerNameLabel = page.locator('label:has-text("Owner Name")');
+  await expect(ownerTypeLabel).toBeVisible();
+  await expect(ownerNameLabel).toBeVisible();
 
   // 4. Assert visible form elements
   const nameField = page.locator('[id="form.name"]');

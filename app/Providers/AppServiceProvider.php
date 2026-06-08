@@ -10,6 +10,8 @@ use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Models\Owner;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -34,6 +36,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Passport::viewNamespace('passport');
+
+        Relation::morphMap([
+            'Company' => Owner::class,
+            'Individual' => Owner::class,
+            'Developer' => Owner::class,
+        ]);
 
         Gate::before(function ($user, $ability) {
             return $user->hasRole('super_admin') ? true : null;

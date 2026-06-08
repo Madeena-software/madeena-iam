@@ -58,6 +58,9 @@ class FilamentResourceTest extends TestCase
         $this->assertNotNull($client->plainSecret);
         $this->assertTrue(Hash::check($client->plainSecret, $client->secret));
         $this->assertEquals(['password', 'authorization_code'], $client->grant_types);
+        $this->assertEquals('Company', $client->owner_type);
+        $this->assertNotNull($client->owner_id);
+        $this->assertEquals('PT Madeena Karya Indonesia', $client->owner->name);
     }
 
     public function test_oauth_client_create_form_layout_and_fields(): void
@@ -65,8 +68,8 @@ class FilamentResourceTest extends TestCase
         Livewire::test(CreateOauthClient::class)
             ->assertFormFieldHidden('id')
             ->assertFormFieldHidden('secret')
-            ->assertFormFieldDoesNotExist('owner_type')
-            ->assertFormFieldDoesNotExist('owner_id')
+            ->assertFormFieldExists('owner_type')
+            ->assertFormFieldExists('owner_id')
             ->assertFormFieldDoesNotExist('provider')
             ->assertFormFieldDoesNotExist('created_by')
             ->assertFormFieldDoesNotExist('updated_by')

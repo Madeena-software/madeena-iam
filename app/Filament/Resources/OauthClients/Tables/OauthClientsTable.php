@@ -21,17 +21,15 @@ class OauthClientsTable
             ->columns([
                 TextColumn::make('owner_type')
                     ->label('Owner type')
-                    ->default('Company')
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('owner.name')
                     ->label('Owner name')
-                    ->default('PT Madeena Karya Indonesia')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')
-                    ->searchable(query: fn ($query, $search) => $query->where('oauth_clients.name', 'like', "%{$search}%"))
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy('oauth_clients.name', $direction)),
+                    ->searchable(query: fn($query, $search) => $query->where('oauth_clients.name', 'like', "%{$search}%"))
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('oauth_clients.name', $direction)),
                 TextColumn::make('provider')
                     ->searchable()
                     ->sortable()
@@ -51,30 +49,29 @@ class OauthClientsTable
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy('oauth_clients.created_at', $direction))
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('oauth_clients.created_at', $direction)),
                 TextColumn::make('updated_at')
                     ->dateTime()
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy('oauth_clients.updated_at', $direction))
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('oauth_clients.updated_at', $direction))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('creator_name')
                     ->label('Created by name')
-                    ->searchable(query: fn ($query, $search) => $query->where('creators.name', 'like', "%{$search}%"))
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy('creators.name', $direction))
+                    ->searchable(query: fn($query, $search) => $query->where('creators.name', 'like', "%{$search}%"))
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('creators.name', $direction))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updater_name')
                     ->label('Updated by name')
-                    ->searchable(query: fn ($query, $search) => $query->where('updaters.name', 'like', "%{$search}%"))
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy('updaters.name', $direction))
+                    ->searchable(query: fn($query, $search) => $query->where('updaters.name', 'like', "%{$search}%"))
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('updaters.name', $direction))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('deleted_at')
                     ->dateTime()
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy('oauth_clients.deleted_at', $direction))
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('oauth_clients.deleted_at', $direction))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('deleter_name')
                     ->label('Deleted by name')
-                    ->searchable(query: fn ($query, $search) => $query->where('deleters.name', 'like', "%{$search}%"))
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy('deleters.name', $direction))
+                    ->searchable(query: fn($query, $search) => $query->where('deleters.name', 'like', "%{$search}%"))
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('deleters.name', $direction))
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('oauth_clients.created_at', 'desc')

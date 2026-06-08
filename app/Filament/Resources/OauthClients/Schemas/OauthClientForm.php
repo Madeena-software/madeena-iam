@@ -7,6 +7,9 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use App\Models\Owner;
 use Filament\Schemas\Schema;
 
 class OauthClientForm
@@ -23,6 +26,23 @@ class OauthClientForm
                     ->hidden(fn (string $operation): bool => $operation === 'create')
                     ->rules(['nullable', 'uuid']),
                 TextInput::make('name')
+                    ->required(),
+                Select::make('owner_type')
+                    ->label('Owner Type')
+                    ->options([
+                        'Company' => 'Company',
+                        'Individual' => 'Individual',
+                        'Developer' => 'Developer',
+                    ])
+                    ->default('Company')
+                    ->searchable()
+                    ->live()
+                    ->required(),
+                Select::make('owner_id')
+                    ->label('Owner Name')
+                    ->options(fn (Get $get) => Owner::where('type', $get('owner_type') ?? 'Company')->pluck('name', 'id'))
+                    ->default(fn () => Owner::where('name', 'PT Madeena Karya Indonesia')->first()?->id)
+                    ->searchable()
                     ->required(),
                 TextInput::make('secret')
                     ->label('Client Secret')
