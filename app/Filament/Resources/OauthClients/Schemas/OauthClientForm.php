@@ -9,7 +9,11 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Hidden;
+use Filament\Infolists\Components\TextEntry;
 use App\Models\Owner;
+use App\Models\OauthClient;
 use Filament\Schemas\Schema;
 
 class OauthClientForm
@@ -21,10 +25,17 @@ class OauthClientForm
                 TextInput::make('id')
                     ->label('Client ID')
                     ->placeholder('Auto-generated UUID if left blank')
-                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                    ->readOnly(fn (string $operation): bool => $operation !== 'create')
                     ->dehydrated(true)
                     ->hidden(fn (string $operation): bool => $operation === 'create')
-                    ->rules(['nullable', 'uuid']),
+                    ->rules(['nullable', 'uuid'])
+                    ->suffixAction(
+                        \Filament\Actions\Action::make('copy_client_id')
+                            ->label('Copy Client ID')
+                            ->icon('heroicon-o-clipboard-document')
+                            ->alpineClickHandler('window.navigator.clipboard.writeText($wire.get(\'data.id\'))')
+                            ->action(fn () => null),
+                    ),
                 TextInput::make('name')
                     ->required(),
                 Select::make('owner_type')
@@ -44,14 +55,50 @@ class OauthClientForm
                     ->default(fn () => Owner::where('name', 'PT Madeena Karya Indonesia')->first()?->id)
                     ->searchable()
                     ->required(),
+                Hidden::make('is_secret_revealed')
+                    ->dehydrated(false)
+                    ->default(false),
                 TextInput::make('secret')
                     ->label('Client Secret')
                     ->placeholder(fn (string $operation): bool => $operation === 'create' ? 'Auto-generated 40-character string if left blank' : '')
                     ->disabled(fn (string $operation): bool => $operation !== 'create')
-                    ->dehydrated(fn ($state) => filled($state))
+                    ->dehydrated(fn ($state) => $state !== '••••••••••••••••••••••••••••••••••••••••' && filled($state))
                     ->hidden(fn (string $operation): bool => $operation === 'create')
-                    ->password()
-                    ->revealable(),
+                    ->password(fn (Get $get) => ! $get('is_secret_revealed'))
+                    ->formatStateUsing(fn ($state) => '••••••••••••••••••••••••••••••••••••••••')
+                    ->suffixActions([
+                        \Filament\Actions\Action::make('reveal_secret')
+                            ->icon('heroicon-o-eye')
+                            ->hidden(fn (Get $get) => $get('is_secret_revealed'))
+                            ->modalHeading('Confirm Password')
+                            ->modalDescription('Please confirm your password to view the client secret.')
+                            ->form([
+                                TextInput::make('user_password')
+                                    ->label('Your Password')
+                                    ->password()
+                                    ->required()
+                                    ->rules([
+                                        fn () => function (string $attribute, $value, \Closure $fail) {
+                                            /** @var \App\Models\User $user */
+                                            $user = request()->user();
+                                            if (! \Illuminate\Support\Facades\Hash::check($value, $user->password)) {
+                                                $fail('Incorrect password.');
+                                            }
+                                        }
+                                    ])
+                            ])
+                            ->action(function (Get $get, Set $set, $record) {
+                                if ($record) {
+                                    $set('secret', $record->secret);
+                                    $set('is_secret_revealed', true);
+                                }
+                            }),
+                        \Filament\Actions\Action::make('copy_secret')
+                            ->icon('heroicon-o-clipboard-document')
+                            ->visible(fn (Get $get) => $get('is_secret_revealed'))
+                            ->alpineClickHandler('window.navigator.clipboard.writeText($wire.get(\'data.secret\'))')
+                            ->action(fn () => null),
+                    ]),
                 Textarea::make('redirect_uris')
                     ->required()
                     ->helperText('Enter one or more redirect URIs separated by commas. Must be valid HTTPS URLs unless using localhost.')
@@ -89,8 +136,19 @@ class OauthClientForm
                     ->columnSpanFull(),
                 Toggle::make('revoked')
                     ->required(),
+                TextEntry::make('app_logo_preview')
+                    ->label('Current App Logo')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->state(function (?OauthClient $record) {
+                        if (empty($record?->app_logo_path)) {
+                            return 'No logo uploaded.';
+                        }
+                        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+                        $disk = \Illuminate\Support\Facades\Storage::disk('s3');
+                        return new \Illuminate\Support\HtmlString('<img src="' . $disk->url($record->app_logo_path) . '" alt="App Logo" style="max-height: 100px; border-radius: 8px; border: 1px solid #374151;">');
+                    }),
                 FileUpload::make('app_logo_path')
-                    ->label('App Logo')
+                    ->label('Upload App Logo')
                     ->disk('s3')
                     ->directory('logos')
                     ->visibility('public')
@@ -98,6 +156,34 @@ class OauthClientForm
                 TextInput::make('description'),
                 Toggle::make('is_active')
                     ->required(),
+                TextInput::make('provider')
+                    ->default('users')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->disabled(),
+                TextEntry::make('created_by')
+                    ->label('Created By')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->state(fn (?OauthClient $record) => $record?->creator?->name ?? '-'),
+                TextEntry::make('updated_by')
+                    ->label('Updated By')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->state(fn (?OauthClient $record) => $record?->updater?->name ?? '-'),
+                TextEntry::make('deleted_by')
+                    ->label('Deleted By')
+                    ->hidden(fn (string $operation, ?OauthClient $record): bool => $operation === 'create' || ! $record?->deleted_by)
+                    ->state(fn (?OauthClient $record) => $record?->deleter?->name ?? '-'),
+                TextEntry::make('created_at')
+                    ->label('Created At')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->state(fn (?OauthClient $record) => $record?->created_at?->translatedFormat('d-M-Y H:i:s') ?? '-'),
+                TextEntry::make('updated_at')
+                    ->label('Updated At')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->state(fn (?OauthClient $record) => $record?->updated_at?->translatedFormat('d-M-Y H:i:s') ?? '-'),
+                TextEntry::make('deleted_at')
+                    ->label('Deleted At')
+                    ->hidden(fn (string $operation, ?OauthClient $record): bool => ! $record?->deleted_at)
+                    ->state(fn (?OauthClient $record) => $record?->deleted_at?->translatedFormat('d-M-Y H:i:s') ?? '-'),
             ]);
     }
 }

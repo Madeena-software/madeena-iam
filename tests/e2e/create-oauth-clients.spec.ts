@@ -67,3 +67,73 @@ test('create oauth client redesign form flow', async ({ page }) => {
   await expect(notificationBody).toContainText('Client ID');
   await expect(notificationBody).toContainText('Client Secret');
 });
+
+test('edit oauth client and reveal secret flow', async ({ page }) => {
+  // 1. Navigate to login and authenticate
+  await page.goto('/admin/login');
+  
+  // Fill credentials
+  await page.fill('input[type="email"]', 'admin@madeena.local');
+  await page.fill('input[type="password"]', 'admin');
+  
+  // Submit login
+  await page.click('button[type="submit"]');
+  
+  // Wait for redirect to admin panel and let page settle
+  await page.waitForURL('**/admin**');
+  await page.waitForLoadState('networkidle');
+
+  // 2. Navigate to Edit OAuth Client page for ebd8ed3e-d9a6-4618-8d63-72f2c8080847
+  await page.goto('/admin/oauth-clients/ebd8ed3e-d9a6-4618-8d63-72f2c8080847/edit');
+  await page.waitForLoadState('networkidle');
+
+  // 3. Assert detailed fields exist on edit page
+  await expect(page.locator('[id="form.provider"]')).toBeVisible();
+  await expect(page.locator('text=Created By')).toBeVisible();
+  await expect(page.locator('text=Created At')).toBeVisible();
+  await expect(page.locator('text=Updated At')).toBeVisible();
+
+  // Assert copy client ID action is visible
+  await expect(page.locator('button[title="Copy Client ID"]')).toBeVisible();
+
+  // 4. Assert app logo preview is visible
+  await expect(page.locator('text=Current App Logo')).toBeVisible();
+
+  // 5. Test secret reveal: client secret field initially shows masked value
+  const secretField = page.locator('[id="form.secret"]');
+  await expect(secretField).toHaveValue('••••••••••••••••••••••••••••••••••••••••');
+
+  // Click the Reveal icon suffix action
+  const revealButton = page.locator('button[title="Reveal secret"]');
+  await expect(revealButton).toBeVisible();
+  await revealButton.click();
+
+  // Modal confirm password should pop up
+  const passwordModal = page.getByRole('heading', { name: 'Confirm Password' });
+  await expect(passwordModal).toBeVisible();
+
+  // Fill in incorrect password
+  await page.fill('input[name*="user_password"]', 'wrong-password');
+  // Click Submit (the primary button in the modal action)
+  await page.getByRole('button', { name: 'Submit', exact: true }).click();
+  
+  // Validation message should appear
+  await expect(page.locator('text=Incorrect password.')).toBeVisible();
+
+  // Fill in correct password
+  await page.fill('input[name*="user_password"]', 'admin');
+  await page.getByRole('button', { name: 'Submit', exact: true }).click();
+
+  // Modal should close and the secret should be revealed
+  await expect(page.locator('text=Incorrect password.')).toHaveCount(0);
+  
+  // The value of secret field should no longer be bullets
+  const updatedValue = await secretField.inputValue();
+  expect(updatedValue).not.toBe('••••••••••••••••••••••••••••••••••••••••');
+  expect(updatedValue.length).toBeGreaterThan(10);
+  
+  // Copy button should now be visible
+  const copyButton = page.locator('button[title="Copy secret"]');
+  await expect(copyButton).toBeVisible();
+});
+

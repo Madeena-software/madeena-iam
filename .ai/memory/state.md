@@ -43,6 +43,7 @@
 - **Milestone 16**: Redesigned the Filament Create OAuth Client page (hidden ID/secret/owner/provider/audit fields, converted grant_types to CheckboxList with descriptions, converted app_logo_path to S3 FileUpload component).
 - **Milestone 17**: Created and integrated `storage:ensure-s3-bucket` Artisan command into setup/deployment scripts (`deploy-local.sh` and `composer.json`) to auto-create S3 buckets safely during deployment.
 - **Milestone 18**: Configured Playwright and implemented automated E2E tests verifying the redesign and form fields layout, resolving strict mode and FilePond UI selector conflicts.
+- **Milestone 19**: Updated AWS_ENDPOINT configuration to `https://s3.mhcsgo.cloud` in `.env` and `.env.local`, verified connectivity using `storage:ensure-s3-bucket`, and ran full test suites (47 PHPUnit + 1 Playwright E2E test passing).
 
 ---
 

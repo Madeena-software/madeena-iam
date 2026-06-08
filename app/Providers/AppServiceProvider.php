@@ -28,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->when(AuthorizationController::class)
             ->needs(StatefulGuard::class)
             ->give(fn () => Auth::guard(config('passport.guard', null)));
+
+        $this->app->bind(
+            \Laravel\Passport\Bridge\ClientRepository::class,
+            \App\Bridge\ClientRepository::class
+        );
     }
 
     /**

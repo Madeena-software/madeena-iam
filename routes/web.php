@@ -23,3 +23,11 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+Route::get('storage/{path}', function ($path) {
+    if (! \Illuminate\Support\Facades\Storage::disk('s3')->exists($path)) {
+        abort(404);
+    }
+    return \Illuminate\Support\Facades\Storage::disk('s3')->response($path);
+})->where('path', '.*');
+

@@ -54,9 +54,8 @@ class FilamentResourceTest extends TestCase
         $client = $component->instance()->record;
         $this->assertNotNull($client);
         $this->assertTrue(Str::isUuid($client->id));
-        $this->assertStringStartsWith('$2y$', $client->secret);
-        $this->assertNotNull($client->plainSecret);
-        $this->assertTrue(Hash::check($client->plainSecret, $client->secret));
+        $this->assertStringStartsWith('eyJpdiI6', $client->getRawOriginal('secret'));
+        $this->assertEquals($client->plainSecret, $client->secret);
         $this->assertEquals(['password', 'authorization_code'], $client->grant_types);
         $this->assertEquals('Company', $client->owner_type);
         $this->assertNotNull($client->owner_id);

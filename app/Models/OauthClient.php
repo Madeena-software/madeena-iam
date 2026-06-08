@@ -118,4 +118,46 @@ class OauthClient extends PassportClient
             ->withPivot(['status', 'approved_at', 'approved_by', 'is_blocked', 'client_app_user_id'])
             ->withTimestamps();
     }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    protected function secret(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (empty($value)) {
+                    return $value;
+                }
+
+                try {
+                    return \Illuminate\Support\Facades\Crypt::decryptString($value);
+                } catch (\Illuminate\Contracts\Encryption\DecryptException) {
+                    return $value;
+                }
+            },
+            set: function (?string $value) {
+                $this->plainSecret = $value;
+
+                if (empty($value)) {
+                    return null;
+                }
+
+                return \Illuminate\Support\Facades\Crypt::encryptString($value);
+            }
+        );
+    }
 }
+
