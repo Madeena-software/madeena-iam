@@ -69,6 +69,7 @@
 ---
 
 ## 6. Next Steps
-
+ 
+- Execute the session management implementation plan ([.ai/prompt/sessions/implement-session-resource.md](file:///var/www/madeena-iam/.ai/prompt/sessions/implement-session-resource.md)) to build the standalone Sessions resource and User relation manager.
 - Perform manual Quality Control on the User-Client attachment activity logging.
 - Monitor production log sizes and clean up archived database logs periodically.

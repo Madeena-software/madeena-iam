@@ -262,6 +262,25 @@ Diagnose and resolve duplicate login entries and empty logout tracking on the Au
 ### Results
 - ✅ **Success**: Duplicate log creation is resolved, and manual logouts now correctly update and display logout timestamps. E2E verification tests successfully guard these features.
 
+## [2026-06-08] Session 13: Created Session Management Specification Prompt
+
+### Objective
+Create a task specification prompt to implement Standalone Sessions Resource and Users Relation Manager for active user session management.
+
+### Actions Performed
+1. **Designed Session Management Architecture**:
+   - Outlined requirements for global SessionResource, page routes, and SessionsRelationManager.
+   - Identified `App\Models\Session` fields, relations, custom device attributes, and UNIX timestamp format requirements.
+2. **Created Specification Folder & File**:
+   - Created the directory `.ai/prompt/sessions/`.
+   - Created the detailed specification prompt file [.ai/prompt/sessions/implement-session-resource.md](file:///var/www/madeena-iam/.ai/prompt/sessions/implement-session-resource.md).
+3. **Synchronized Next Steps**:
+   - Updated `.ai/memory/state.md` next steps with this session management task.
+
+### Results
+- ✅ **Success**: Folder structure and specification prompt created under `.ai/prompt/sessions/`.
+
+
 
 
 
