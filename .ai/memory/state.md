@@ -38,6 +38,7 @@
 - **Milestone 11**: Removed duplicate onboarding email trigger from `CreateUser` page hook.
 - **Milestone 12**: Updated `FilamentResourceTest` to assert single-email behavior.
 - **Milestone 13**: Synced `madeena_iam_prd.md` and `project-context.md` database schemas with migrations.
+- **Milestone 14**: Created the browser-based E2E test prompt document at `.ai/prompt/browser-e2e-testing.md`.
 
 ---
 
@@ -58,5 +59,5 @@
 
 ## 6. Next Steps
 
-- Proceed with remaining backlog items identified in the compliance audit.
+- Execute the browser-based E2E test suite by invoking the `browser_subagent` following the instructions in `.ai/prompt/browser-e2e-testing.md`.
 - Ensure all future updates follow the established testing pyramid and Pint formatting guidelines.

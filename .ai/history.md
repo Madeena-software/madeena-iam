@@ -76,3 +76,21 @@ Perform functional PRD audit, identify schema mismatches, and resolve onboarding
 ### Results
 - ✅ **Success**: Functional audit completed. Onboarding flow duplicate email issue fixed and verified by tests. Documentation and project context synced with actual database schemas.
 
+## [2026-06-08] Session 4: Browser E2E Testing Prompt Creation
+
+### Objective
+Create a new prompt template/instruction document in `.ai/prompt/` to guide future AI sessions and browser subagents in performing full end-to-end testing using the browser.
+
+### Actions Performed
+1. **Audited Rules & Repository Configuration**:
+   - Analyzed existing Filament resources, schemas, and custom route structures to map accurate target paths and login forms.
+   - Identified test configurations and dependency behaviors (e.g. Docker MySQL hybrid environment setup on port 3310).
+2. **Created Browser E2E Test Prompt**:
+   - Created a comprehensive instruction prompt at [.ai/prompt/browser-e2e-testing.md](file:///var/www/madeena-iam/.ai/prompt/browser-e2e-testing.md).
+   - Documented exact pre-flight requirements (Docker MySQL DB startup, local dev server, asset compilation).
+   - Formulated a 7-step E2E browser test plan covering Admin Panel login, OAuth Client registration, User creation and Client access mapping, user login verification, and audit trail verification.
+   - Prescribed an artifact delivery format (`e2e_browser_test_results.md`) with validation matrices and recorded browser subagent animation links.
+
+### Results
+- ✅ **Success**: Added the specialized browser E2E test prompt document under `.ai/prompt/` mapping the exact application setup, resource flows, and validation rules.
+
