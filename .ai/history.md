@@ -157,3 +157,25 @@ Explore the workspace state, update S3 bucket gateway endpoint configuration, an
 
 ### Results
 - ✅ **Success**: S3 endpoint migrated to `https://s3.mhcsgo.cloud`, connection verified, and the full Laravel + Playwright test suite is 100% passing.
+
+## [2026-06-08] Session 8: Activities Read-Only & Additional Logging
+
+### Objective
+Make the Activities resource in Filament read-only, enable activity logging for OAuth Clients and Client Users, and add automated Playwright E2E verification tests.
+
+### Actions Performed
+1. **Activities UI Read-Only Transformation**:
+   - Disabled manual create, edit, and delete functionality on the `ActivityResource` by overriding `canCreate`, `canEdit`, `canDelete`, and `canDeleteAny` to return `false`.
+   - Modified `ListActivities` page and `ActivitiesTable` to remove the Create, Edit, and Delete actions, and registered `ViewAction` to allow read-only details review in a modal.
+   - Deleted unused `CreateActivity` and `EditActivity` page classes.
+   - Configured `ActivitiesTable` to default sort by `created_at` descending so newest log entries are displayed first.
+2. **Activity Logging Integration**:
+   - Added the `LogsActivity` trait and defined `getActivitylogOptions()` in the `OauthClient` model to audit name, redirect URIs, grant types, active status, description, logo path, and owner changes.
+   - Added the `LogsActivity` trait and defined `getActivitylogOptions()` in the `ClientUser` pivot model to audit user-client association updates (status, blocked state, approval metadata).
+3. **Automated Verification**:
+   - Implemented a unified E2E Playwright test suite in `tests/e2e/activities.spec.ts` verifying read-only UI attributes and verifying that creating an OAuth client generates a corresponding log entry in the database.
+   - Verified that all 47 backend PHPUnit tests and the new Playwright E2E test pass successfully.
+
+### Results
+- ✅ **Success**: Activities resource is now fully read-only and lists newest entries first. Activity logging is successfully configured and verified for both OAuth Clients and Client User relations.
+

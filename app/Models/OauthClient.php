@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Passport\Client as PassportClient;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class OauthClient extends PassportClient
 {
-    use SoftDeletes;
+    use LogsActivity, SoftDeletes;
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -109,6 +111,23 @@ class OauthClient extends PassportClient
             $model->deleted_by = Auth::id();
             $model->saveQuietly();
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'name',
+                'redirect_uris',
+                'grant_types',
+                'revoked',
+                'is_active',
+                'description',
+                'app_logo_path',
+                'owner_type',
+                'owner_id',
+            ])
+            ->logOnlyDirty();
     }
 
     public function users()

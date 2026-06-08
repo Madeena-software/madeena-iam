@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class ClientUser extends Pivot
 {
-    use SoftDeletes;
+    use LogsActivity, SoftDeletes;
 
     protected $table = 'client_user';
 
@@ -51,6 +53,21 @@ class ClientUser extends Pivot
             $model->deleted_by = auth()->id();
             $model->saveQuietly();
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'user_id',
+                'client_id',
+                'client_app_user_id',
+                'status',
+                'approved_at',
+                'approved_by',
+                'is_blocked',
+            ])
+            ->logOnlyDirty();
     }
 
     public function sendOnboardingEmail(): void
