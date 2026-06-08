@@ -14,10 +14,10 @@ class AuthenticationLogForm
     {
         return $schema
             ->components([
-                TextInput::make('authenticatable_id')
-                    ->required(),
-                TextInput::make('authenticatable_type')
-                    ->required(),
+                 TextInput::make('authenticatable_id')
+                    ->label('User')
+                    ->formatStateUsing(fn ($record) => $record?->authenticatable?->name ?? $record?->authenticatable_id),
+                TextInput::make('authenticatable_type'),
                 TextInput::make('ip_address'),
                 Textarea::make('user_agent')
                     ->columnSpanFull(),
@@ -27,7 +27,10 @@ class AuthenticationLogForm
                 DateTimePicker::make('logout_at'),
                 Toggle::make('cleared_by_user')
                     ->required(),
-                TextInput::make('location'),
+                Textarea::make('location')
+                    ->columnSpanFull()
+                    ->rows(4)
+                    ->formatStateUsing(fn ($state) => is_array($state) || is_object($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : $state),
             ]);
     }
 }

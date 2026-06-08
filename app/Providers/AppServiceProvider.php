@@ -52,19 +52,19 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasRole('super_admin') ? true : null;
         });
 
-        Event::listen(
-            Login::class,
-            LogSuccessfulLogin::class
-        );
+        // Event::listen(
+        //     Login::class,
+        //     LogSuccessfulLogin::class
+        // );
 
-        Event::listen(
-            Logout::class,
-            LogSuccessfulLogout::class
-        );
+        // Event::listen(
+        //     Logout::class,
+        //     LogSuccessfulLogout::class
+        // );
 
-        Event::listen(
-            Failed::class,
-            LogFailedLogin::class
-        );
+        // Event::listen(
+        //     Failed::class,
+        //     LogFailedLogin::class
+        // );
     }
 }

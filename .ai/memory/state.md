@@ -18,8 +18,8 @@
 
 ## 2. Active Goal
  
-- **Goal**: `Activities log display name, sorting, and detail view formatting`
-- **Objective**: `Display Subject and Causer names instead of UUIDs, enable column sorting, and pretty-print JSON fields in the detail modal.`
+- **Goal**: `Authentication log display name and detail view formatting`
+- **Objective**: `Display User name instead of authenticatable UUIDs, enable column sorting, pretty-print JSON location field, and add Playwright E2E verification.`
 
 ---
 
@@ -47,6 +47,9 @@
 - **Milestone 20**: Created implementation plan detailing read-only Activities and activity logging for OauthClient and ClientUser models with Playwright verification.
 - **Milestone 21**: Implemented read-only Filament Activities Resource, added activity logging for `OauthClient` and `ClientUser`, and verified with `activities.spec.ts` Playwright test suite.
 - **Milestone 22**: Replaced raw UUIDs with readable names for Subjects and Causers in the Activities list table and detail modal, enabled column sorting, pretty-printed changes/properties JSON, and verified with updated E2E Playwright test suite.
+- **Milestone 23**: Refined Filament Authentication Logs resource by showing user names instead of UUIDs, enabling column sorting, and pretty-printing the JSON location field. Formatted nullable polymorphic relation properties and validated functionality with 100% pass rate on Playwright test `authentication-logs.spec.ts`.
+- **Milestone 24**: Converted Filament Authentication Logs Resource to be read-only by removing page router mappings, disabling policy rules (create/edit/delete), implementing `ViewAction` detail modals, configuring default sorting by `login_at` descending, and updating E2E Playwright test suite validation.
+- **Milestone 25**: Resolved duplicate login tracking by removing manual event listeners in `AppServiceProvider.php` (which conflicted with Laravel's automatic listener discovery). Verified successful single login logging and logout tracking via updated Playwright E2E test `authentication-logs.spec.ts`.
 
 ---
 
@@ -55,7 +58,7 @@
 - **Database Health**: MySQL 8.4 running locally on port 3310 (configured via `docker-compose.local.yml`).
 - **Application Setup**: Done via `deploy-local.sh`.
 - **Local Dev Server**: Executed via `composer dev`.
-- **Test Suite Status**: 100% Pass (47 PHPUnit tests + 3 Playwright E2E test cases passing).
+- **Test Suite Status**: 100% Pass (47 PHPUnit tests + 4 Playwright E2E test cases passing).
 
 ---
 

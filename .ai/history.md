@@ -200,4 +200,69 @@ Modify the Filament Activities log table and detail view to show readable names 
 ### Results
 - ✅ **Success**: Activities list and detail modal now display readable model names instead of raw UUIDs, allow column-based sorting, pretty-print JSON attribute changes and properties, and E2E test coverage successfully guards these improvements.
 
+## [2026-06-08] Session 10: Authentication Logs Display and Location Formatting
+
+### Objective
+Modify the Filament Authentication Logs resource table and edit schemas to resolve authenticatable model names (User names) instead of raw UUIDs, enable column sorting, remove strict validation requirements for nullable database fields, pretty-print the JSON location data, and create automated E2E tests for verification.
+
+### Actions Performed
+1. **Table Enhancements**:
+   - Modified `AuthenticationLogsTable.php` to label the `authenticatable_id` column as "User".
+   - Added `formatStateUsing()` to display the authenticatable's name (`$record->authenticatable?->name`) or fall back to the ID.
+   - Configured all columns in the table schema to be sortable.
+2. **Form Schema Refactoring**:
+   - Modified `AuthenticationLogForm.php` to resolve and display the User's name in `authenticatable_id` using `formatStateUsing`.
+   - Removed `required()` constraint on `authenticatable_id` and `authenticatable_type` inputs to support nullable database schemas (e.g. client/system logs).
+   - Changed the `location` input component from a `TextInput` to a full-width `Textarea` and structured it with a JSON pretty-print formatter to avoid rendering `[object Object]`.
+3. **Automated Verification**:
+   - Created E2E Playwright test suite `tests/e2e/authentication-logs.spec.ts` to log in, navigate to Authentication Logs list and edit pages, and assert proper display of resolved User names and pretty-printed location JSON.
+   - Ran Playwright E2E and PHPUnit test suites, achieving a 100% pass rate.
+
+### Results
+- ✅ **Success**: Authentication logs table and form schemas now cleanly display model names, allow column sorting, render pretty-printed JSON location values, and have robust automated E2E verification coverage.
+
+## [2026-06-08] Session 11: Authentication Logs Read-Only Conversion
+
+### Objective
+Enforce read-only access on the Filament Authentication Logs resource to replicate the security policies applied to the Activities resource.
+
+### Actions Performed
+1. **Resource Policy Overrides**:
+   - Added overrides for `canCreate()`, `canEdit()`, `canDelete()`, and `canDeleteAny()` returning `false` on `AuthenticationLogResource.php`.
+   - Removed Create and Edit sub-page imports and mappings in `getPages()`.
+2. **Page Deletion**:
+   - Deleted unused class files: `CreateAuthenticationLog.php` and `EditAuthenticationLog.php`.
+   - Cleared the explicit `CreateAction::make()` from `getHeaderActions()` in `ListAuthenticationLogs.php`.
+3. **Table Action Updates**:
+   - Replaced `EditAction` with `ViewAction` in `AuthenticationLogsTable.php` to present record details in modal slide-overs instead of dedicated edit pages.
+   - Configured default sorting of the table by `login_at` descending.
+   - Cleared the delete bulk action group from `toolbarActions()`.
+4. **E2E Playwright Test Updates**:
+   - Updated `tests/e2e/authentication-logs.spec.ts` to assert that create/edit buttons are absent and that clicking "View" triggers the read-only details modal containing the formatted user name and pretty location JSON.
+   - Verified execution passing in 4.1s.
+
+### Results
+- ✅ **Success**: Authentication Logs are now fully read-only, matching the security stance of the Activities Resource. All E2E test suites pass successfully.
+
+## [2026-06-08] Session 12: Duplicate Logins & Logout Tracking Remediation
+
+### Objective
+Diagnose and resolve duplicate login entries and empty logout tracking on the Authentication Logs resource.
+
+### Actions Performed
+1. **Identified Listener Conflict**:
+   - Discovered that login and logout events were generating duplicate records because listeners (`LogSuccessfulLogin`, `LogSuccessfulLogout`, `LogFailedLogin`) were registered both manually in `AppServiceProvider.php` and dynamically via Laravel's automatic listener discovery.
+   - Commented out the manual listener registrations in `AppServiceProvider.php`.
+2. **E2E Playwright Test Enhancements**:
+   - Updated `tests/e2e/authentication-logs.spec.ts` to log in, navigate via sidebar to avoid aborted redirect page loads, trigger a manual logout, log back in, and assert that the first session successfully registers a non-empty `logout_at` timestamp.
+3. **Database Cleansing & Verification**:
+   - Truncated the `authentication_logs` table.
+   - Ran Playwright E2E tests, which successfully completed in 8.9s. Verified database entries contain only single records per login event and correctly capture the logout timestamp upon user sign out.
+
+### Results
+- ✅ **Success**: Duplicate log creation is resolved, and manual logouts now correctly update and display logout timestamps. E2E verification tests successfully guard these features.
+
+
+
+
 
