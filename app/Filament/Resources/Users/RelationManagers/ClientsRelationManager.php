@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Users\RelationManagers;
 
 use App\Enums\UserStatus;
-use Filament\Actions\AttachAction;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
@@ -86,9 +86,19 @@ class ClientsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                AttachAction::make()
-                    ->form(fn (AttachAction $action): array => [
-                        $action->getRecordSelect(),
+                Action::make('attach')
+                    ->label('Attach Oauth Client')
+                    ->modalHeading('Attach Oauth Client')
+                    ->form([
+                        TextInput::make('client_id')
+                            ->label('Client ID')
+                            ->placeholder('Enter Client ID (UUID)')
+                            ->required()
+                            ->uuid()
+                            ->rules(['exists:oauth_clients,id'])
+                            ->validationMessages([
+                                'exists' => 'The Client ID is invalid or does not exist.',
+                            ]),
                         Select::make('status')
                             ->options(UserStatus::class)
                             ->default(UserStatus::PENDING_APPROVAL)
@@ -98,7 +108,29 @@ class ClientsRelationManager extends RelationManager
                             ->required(),
                         TextInput::make('client_app_user_id')
                             ->label('Client App User ID'),
-                    ]),
+                    ])
+                    ->action(function (array $data, RelationManager $livewire) {
+                        $user = $livewire->getOwnerRecord();
+
+                        if ($user->clients()->where('client_id', $data['client_id'])->exists()) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Client is already attached to this user.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        $user->clients()->attach($data['client_id'], [
+                            'status' => $data['status'],
+                            'is_blocked' => $data['is_blocked'],
+                            'client_app_user_id' => $data['client_app_user_id'],
+                        ]);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Client attached successfully')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->recordActions([
                 EditAction::make(),
