@@ -137,6 +137,7 @@ class OauthClient extends PassportClient
         return $this->belongsToMany(User::class, 'client_user', 'client_id', 'user_id')
             ->using(ClientUser::class)
             ->withPivot(['status', 'approved_at', 'approved_by', 'is_blocked', 'client_app_user_id'])
+            ->wherePivotNull('deleted_at')
             ->withTimestamps();
     }
 

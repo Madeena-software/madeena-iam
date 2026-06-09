@@ -64,6 +64,7 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsToMany(OauthClient::class, 'client_user', 'user_id', 'client_id')
             ->using(ClientUser::class)
             ->withPivot(['status', 'approved_at', 'approved_by', 'is_blocked', 'client_app_user_id'])
+            ->wherePivotNull('deleted_at')
             ->withTimestamps();
     }
 
