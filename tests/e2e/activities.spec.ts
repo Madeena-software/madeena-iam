@@ -25,6 +25,7 @@ test('activities read-only UI and logging flows', async ({ page }) => {
   await expect(page.locator('button', { hasText: 'Edit' })).toHaveCount(0);
 
   // Assert that View Action exists and can be clicked to open modal
+  await page.waitForTimeout(1000);
   const viewAction = page.getByRole('button', { name: 'View' }).first();
   if (await viewAction.count() > 0) {
     await viewAction.click();
@@ -70,6 +71,7 @@ test('activities read-only UI and logging flows', async ({ page }) => {
   await expect(page.locator('td', { hasText: clientName }).first()).toBeVisible();
 
   // Click View to inspect details modal
+  await page.waitForTimeout(1000);
   await page.getByRole('button', { name: 'View' }).first().click();
   await expect(page.getByRole('heading', { name: 'View activity' })).toBeVisible();
   const dialog = page.getByRole('dialog').filter({ hasText: 'View activity' });

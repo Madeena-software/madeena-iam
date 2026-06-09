@@ -72,6 +72,21 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Session::class);
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->hasRole('super_admin');

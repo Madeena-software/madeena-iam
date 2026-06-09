@@ -39,6 +39,10 @@ test('users resource full CRUD and restore flow', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Edit User' })).toBeVisible();
   await expect(page.locator('[id="form.email"]')).toHaveValue(randomEmail);
 
+  // Assert audit fields display correctly as text entries (Infolist style)
+  await expect(page.locator('text=Created By')).toBeVisible();
+  await expect(page.locator('#form').getByText('Super Admin')).toBeVisible();
+
   // 4. Go back to list, search and edit user
   await page.goto('/admin/users');
   await page.waitForLoadState('networkidle');
@@ -52,6 +56,7 @@ test('users resource full CRUD and restore flow', async ({ page }) => {
   // Verify only our created user is shown in the table
   const userRow = page.locator('table tbody tr', { hasText: randomEmail }).first();
   await expect(userRow).toBeVisible();
+  await expect(userRow).toContainText('Super Admin');
 
   // Click Edit action on that row
   const editButton = userRow.getByRole('link', { name: 'Edit' });

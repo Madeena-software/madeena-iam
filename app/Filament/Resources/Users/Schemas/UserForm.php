@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
 
 class UserForm
@@ -23,9 +25,18 @@ class UserForm
                     ->password()
                     ->dehydrated(fn ($state) => filled($state))
                     ->required(fn (string $operation): bool => $operation === 'create'),
-                TextInput::make('created_by'),
-                TextInput::make('updated_by'),
-                TextInput::make('deleted_by'),
+                TextEntry::make('created_by')
+                    ->label('Created By')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->state(fn (?User $record) => $record?->creator?->name ?? '-'),
+                TextEntry::make('updated_by')
+                    ->label('Updated By')
+                    ->hidden(fn (string $operation): bool => $operation === 'create')
+                    ->state(fn (?User $record) => $record?->updater?->name ?? '-'),
+                TextEntry::make('deleted_by')
+                    ->label('Deleted By')
+                    ->hidden(fn (string $operation, ?User $record): bool => $operation === 'create' || ! $record?->deleted_by)
+                    ->state(fn (?User $record) => $record?->deleter?->name ?? '-'),
             ]);
     }
 }

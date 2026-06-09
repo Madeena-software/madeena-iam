@@ -28,7 +28,13 @@ test('active sessions management: standalone list, relation manager, and self-te
   await page.waitForURL('**/admin/users');
   await page.waitForLoadState('networkidle');
 
-  const adminRow = page.locator('table tbody tr', { hasText: 'Super Admin' }).first();
+  // Search for the admin user to ensure it is visible regardless of sorting or pagination
+  const searchInput = page.getByRole('searchbox', { name: 'Search', exact: true });
+  await searchInput.fill('admin@madeena.local');
+  await page.keyboard.press('Enter');
+  await page.waitForLoadState('networkidle');
+
+  const adminRow = page.locator('table tbody tr', { hasText: 'admin@madeena.local' }).first();
   const editButton = adminRow.getByRole('link', { name: 'Edit' });
   await expect(editButton).toBeVisible();
   await editButton.click();

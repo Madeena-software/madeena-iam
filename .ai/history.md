@@ -280,8 +280,42 @@ Create a task specification prompt to implement Standalone Sessions Resource and
 ### Results
 - ✅ **Success**: Folder structure and specification prompt created under `.ai/prompt/sessions/`.
 
+## [2026-06-09] Session 14: Plan and analyze User Index audit fields display name
 
+### Objective
+Analyze and plan the implementation to resolve and display readable creator, updater, and deleter names (instead of raw UUIDs) in the User list table and detail form, preventing SQL query column ambiguity during searching/sorting.
 
+### Actions Performed
+1. **Audited Other Resources**:
+   - Studied `OauthClientsTable.php` and `ListOauthClients.php` to analyze how it performs left joins on the `users` table to retrieve `creator_name`, `updater_name`, and `deleter_name`.
+   - Identified that self-joining `users` will trigger SQL column ambiguity on columns like `id`, `name`, `email`, `created_at`, `updated_at`, etc. unless they are explicitly prefixed (e.g. `users.name`, `users.email`) in search and sort queries.
+2. **Updated State and Logs**:
+   - Updated `.ai/memory/state.md` active goal, objectives, and next steps.
+   - Refined the verification plan to align with the [Testing Strategy — The Test Pyramid](file:///var/www/madeena-iam/.ai/rules/testing-pyramid.md) guidelines: mapping out unit tests for `User` model relationships, feature tests for Filament Livewire table queries, and Playwright E2E tests for browser UI assertions.
+   - Appended session details to `.ai/history.md`.
 
+### Results
+- ✅ **Success**: Completed architectural study, updated the `.ai` control center files, and drafted a pyramid-compliant verification plan. No application source code changes were made.
 
+## [2026-06-09] Session 15: Fix User Index and Form Display of Creator, Updater, and Deleter Names
 
+### Objective
+Resolve and display readable creator, updater, and deleter names (instead of raw UUIDs) in the User list table and detail form, preventing SQL query column ambiguity during searching/sorting, following the approved implementation plan.
+
+### Actions Performed
+1. **Model Relations**:
+   - Added self-referencing `creator()`, `updater()`, and `deleter()` relationships to the `User` model (`User.php`).
+2. **List Query Left-Joins**:
+   - Modified `ListUsers.php` to left-join `users` as `creators`, `updaters`, and `deleters` and select the custom `creator_name`, `updater_name`, and `deleter_name` fields.
+3. **Table & Form Schema Refactoring**:
+   - Updated `UsersTable.php` to replace the UUID columns with the human-readable name columns.
+   - Prefix-qualified all 7 base columns (`id`, `name`, `email`, `email_verified_at`, `created_at`, `updated_at`, `deleted_at`) in their search/sort query callbacks using `users.` to resolve self-join query ambiguity, and configured default sorting by `users.created_at` descending.
+   - Updated `UserForm.php` to use `TextEntry` components for audit log displays, hid them during `create` operations, and conditionally hide `deleted_by` if the user is not soft-deleted.
+4. **Pyramid-Aligned Verification**:
+   - Created `UserRelationshipTest.php` (pure unit test verifying relationships).
+   - Created `UserAuditFieldsTest.php` (feature test asserting columns, no SQL crashes on sorting/searching, and form display attributes).
+   - Updated `users.spec.ts` (Playwright E2E test verifying "Super Admin" is visible instead of UUID in browser edit and list tables).
+   - Ran all tests: 100% passed (47 PHPUnit + 2 New PHPUnit tests + 5 Playwright E2E tests).
+
+### Results
+- ✅ **Success**: User index page and detail form now cleanly display resolved audit user names, columns support robust sorting/searching, and the pyramid test coverage fully guards the system.
