@@ -60,7 +60,7 @@
 - **Database Health**: MySQL 8.4 running locally on port 3310 (configured via `docker-compose.local.yml`).
 - **Application Setup**: Done via `deploy-local.sh`.
 - **Local Dev Server**: Executed via `composer dev`.
-- **Test Suite Status**: 100% Pass (47 PHPUnit tests + 4 Playwright E2E test cases passing).
+- **Test Suite Status**: 100% Pass (68 PHPUnit tests + 6 Playwright E2E test cases passing).
 
 ---
 
