@@ -51,6 +51,7 @@
 - **Milestone 24**: Converted Filament Authentication Logs Resource to be read-only by removing page router mappings, disabling policy rules (create/edit/delete), implementing `ViewAction` detail modals, configuring default sorting by `login_at` descending, and updating E2E Playwright test suite validation.
 - **Milestone 25**: Resolved duplicate login tracking by removing manual event listeners in `AppServiceProvider.php` (which conflicted with Laravel's automatic listener discovery). Verified successful single login logging and logout tracking via updated Playwright E2E test `authentication-logs.spec.ts`.
 - **Milestone 26**: Resolved and displayed creator, updater, and deleter names in the User resource index and detail/edit views. Added self-referential model relationships, refactored Livewire table columns with prefix-qualified columns to prevent SQL self-join query ambiguity, and verified with Unit, Feature, and Playwright E2E test suites (100% green).
+- **Milestone 54**: Diagnosed E2E test residue leakage (restored test users left active). Updated `tests/e2e/users.spec.ts` to perform a full delete and force-delete cleanup at the end of the test. Verified with 100% passing E2E tests.
 
 ---
 

@@ -133,4 +133,41 @@ test('users resource full CRUD and restore flow', async ({ page }) => {
   // Verify restore button is no longer visible (since it's restored, delete should be back)
   await expect(page.getByRole('button', { name: 'Restore', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
+
+  // 9. Clean up: Delete and then Force Delete to leave the database clean
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  const deleteDialogAfterRestore = page.getByRole('dialog').filter({ hasText: 'Delete User' });
+  await expect(deleteDialogAfterRestore.getByRole('heading', { name: 'Delete User' })).toBeVisible();
+  await deleteDialogAfterRestore.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.waitForURL('**/admin/users');
+  await page.waitForLoadState('networkidle');
+
+  // Go to filters to find the soft-deleted user
+  const filterButtonAfterRestore = page.locator('button.fi-ta-filter-trigger, button[title="Filter"]').first();
+  await filterButtonAfterRestore.click();
+  await page.waitForLoadState('networkidle');
+
+  const trashedFilterAfterRestore = page.getByLabel('Deleted records');
+  await trashedFilterAfterRestore.selectOption({ label: 'Only deleted records' });
+  await page.getByRole('button', { name: 'Apply filters' }).click();
+  await page.waitForLoadState('networkidle');
+
+  // Find the row and edit
+  const trashedUserRowAfterRestore = page.locator('table tbody tr', { hasText: randomEmail }).first();
+  await trashedUserRowAfterRestore.getByRole('link', { name: 'Edit' }).click();
+  await page.waitForURL('**/admin/users/*/edit');
+  await page.waitForLoadState('networkidle');
+
+  // Force delete the user to completely remove it from the DB
+  const forceDeleteButton = page.getByRole('button', { name: 'Force delete', exact: true });
+  await expect(forceDeleteButton).toBeVisible();
+  await forceDeleteButton.click();
+
+  const forceDeleteDialog = page.getByRole('dialog').filter({ hasText: 'Force delete User' });
+  await expect(forceDeleteDialog.getByRole('heading', { name: 'Force delete User' })).toBeVisible();
+  await forceDeleteDialog.getByRole('button', { name: 'Delete', exact: true }).click();
+
+  // Wait for redirect to list page
+  await page.waitForURL('**/admin/users');
+  await page.waitForLoadState('networkidle');
 });

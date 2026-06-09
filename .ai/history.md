@@ -319,3 +319,24 @@ Resolve and display readable creator, updater, and deleter names (instead of raw
 
 ### Results
 - ✅ **Success**: User index page and detail form now cleanly display resolved audit user names, columns support robust sorting/searching, and the pyramid test coverage fully guards the system.
+
+## [2026-06-09] Session 16: Diagnose and Fix E2E Test Active User Leakage
+
+### Objective
+Diagnose why soft-deleted users were still showing up in the "Users" list filter without deleted data, determine if it is due to an E2E test, database seeding, or a bug, and resolve it.
+
+### Actions Performed
+1. **Query & Filter Validation**:
+   - Verified via raw MySQL container execution and local PHP tinker test scripts that the User list page query (`ListUsers::getTableQuery()`) compiles correctly and returns exactly 0 soft-deleted users when no filter is applied (defaulting to the soft-deleted scope).
+2. **Identified Root Cause**:
+   - Found that the Playwright E2E test (`tests/e2e/users.spec.ts`) runs directly on the local development database, creates a test user, soft-deletes it, and then **restores** it at the end to assert the restore action functionality.
+   - Restoring the test user sets `deleted_at` to `NULL`, leaving the user active in the database. As a result, subsequent visits to the user list page showed these residual active users, confusing the developer into thinking deleted data was showing up.
+3. **Implemented Cleanup Routine**:
+   - Modified `tests/e2e/users.spec.ts` to execute a final delete and then a **Force Delete** to completely purge the created test user from the database at the end of the test.
+   - Adjusted the Playwright selector to locate the correct `Force delete User` modal heading and the confirmation button (`Delete`) inside the Filament dialog.
+4. **Verification**:
+   - Executed Playwright E2E tests, confirming a 100% pass rate and verifying that no test user residues remain active in the local database.
+
+### Results
+- ✅ **Success**: Identified the residue source as the E2E test restore flow. Updated the E2E test suite to execute a complete force-delete cleanup, ensuring database cleanliness.
+
