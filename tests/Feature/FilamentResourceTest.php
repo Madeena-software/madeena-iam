@@ -9,6 +9,7 @@ use App\Filament\Resources\OauthClients\Pages\CreateOauthClient;
 use App\Filament\Resources\OauthClients\Pages\ListOauthClients;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
+use App\Filament\Resources\Users\RelationManagers\ClientsRelationManager;
 use App\Mail\OnboardingMail;
 use App\Models\OauthClient;
 use App\Models\User;
@@ -235,5 +236,50 @@ class FilamentResourceTest extends TestCase
             ->filterTable('trashed', false)
             ->assertCanSeeTableRecords([$deletedClient])
             ->assertCanNotSeeTableRecords([$activeClient]);
+    }
+
+    public function test_user_clients_relation_manager_attach_and_edit_pivot(): void
+    {
+        $user = User::factory()->create();
+
+        $client = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'IT Client',
+            'redirect_uris' => 'https://it.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+
+        // Test custom attach action with manual input client_id
+        Livewire::test(ClientsRelationManager::class, [
+            'ownerRecord' => $user,
+            'pageClass' => EditUser::class,
+        ])
+            ->callTableAction('attach', data: [
+                'client_id' => $client->id,
+                'status' => UserStatus::PENDING_APPROVAL->value,
+                'is_blocked' => false,
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $this->assertTrue($user->clients()->where('client_id', $client->id)->exists());
+
+        // Test editing pivot attributes via relation manager edit action
+        Livewire::test(ClientsRelationManager::class, [
+            'ownerRecord' => $user,
+            'pageClass' => EditUser::class,
+        ])
+            ->mountTableAction('edit', record: $client->id)
+            ->setTableActionData([
+                'status' => UserStatus::APPROVED->value,
+                'is_blocked' => true,
+            ])
+            ->callMountedTableAction()
+            ->assertHasNoTableActionErrors();
+
+        $pivot = $user->clients()->wherePivot('client_id', $client->id)->first()->pivot;
+        $this->assertEquals(UserStatus::APPROVED, $pivot->status);
+        $this->assertTrue($pivot->is_blocked);
     }
 }

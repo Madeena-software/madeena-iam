@@ -13,6 +13,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -32,22 +33,20 @@ class ClientsRelationManager extends RelationManager
                     ->maxLength(255)
                     ->disabled()
                     ->dehydrated(false),
-                TextInput::make('pivot.client_app_user_id')
+                TextInput::make('client_app_user_id')
                     ->label('Client App User ID')
                     ->disabled(),
-                Select::make('pivot.status')
+                Select::make('status')
                     ->options(UserStatus::class)
                     ->required(),
-                Toggle::make('pivot.is_blocked')
+                Toggle::make('is_blocked')
                     ->label('Is Blocked')
                     ->required(),
-                DateTimePicker::make('pivot.approved_at')
+                DateTimePicker::make('approved_at')
                     ->disabled(),
-                TextInput::make('pivot_approved_by_name')
-                    ->label('Approved By')
-                    ->state(fn (?OauthClient $record) => $record?->pivot?->approvedBy?->name ?? '-')
-                    ->disabled()
-                    ->dehydrated(false),
+                TextEntry::make('approved_by_name')
+                     ->label('Approved By')
+                     ->state(fn (?OauthClient $record) => $record?->pivot?->approvedBy?->name ?? '-'),
             ]);
     }
 
