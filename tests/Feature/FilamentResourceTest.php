@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserStatus;
 use App\Filament\Resources\OauthClients\Pages\CreateOauthClient;
+use App\Filament\Resources\OauthClients\Pages\ListOauthClients;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Mail\OnboardingMail;
@@ -149,5 +150,90 @@ class FilamentResourceTest extends TestCase
             return $mail->hasTo('approveduser@example.com') &&
                 Str::contains($mail->resetUrl, 'password-reset/');
         });
+    }
+
+    public function test_default_view_does_not_show_deleted_oauth_clients(): void
+    {
+        $deletedClient = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Deleted Client',
+            'secret' => Hash::make('test-secret'),
+            'redirect_uris' => 'https://testapp.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+        $deletedClient->delete();
+
+        $activeClient = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Active Client',
+            'secret' => Hash::make('test-secret'),
+            'redirect_uris' => 'https://testapp.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+
+        Livewire::test(ListOauthClients::class)
+            ->assertCanSeeTableRecords([$activeClient])
+            ->assertCanNotSeeTableRecords([$deletedClient]);
+    }
+
+    public function test_filter_with_deleted_records_shows_deleted_oauth_clients(): void
+    {
+        $deletedClient = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Deleted Client',
+            'secret' => Hash::make('test-secret'),
+            'redirect_uris' => 'https://testapp.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+        $deletedClient->delete();
+
+        $activeClient = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Active Client',
+            'secret' => Hash::make('test-secret'),
+            'redirect_uris' => 'https://testapp.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+
+        Livewire::test(ListOauthClients::class)
+            ->filterTable('trashed', true)
+            ->assertCanSeeTableRecords([$activeClient, $deletedClient]);
+    }
+
+    public function test_filter_only_deleted_records_shows_only_deleted_oauth_clients(): void
+    {
+        $deletedClient = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Deleted Client',
+            'secret' => Hash::make('test-secret'),
+            'redirect_uris' => 'https://testapp.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+        $deletedClient->delete();
+
+        $activeClient = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Active Client',
+            'secret' => Hash::make('test-secret'),
+            'redirect_uris' => 'https://testapp.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+
+        Livewire::test(ListOauthClients::class)
+            ->filterTable('trashed', false)
+            ->assertCanSeeTableRecords([$deletedClient])
+            ->assertCanNotSeeTableRecords([$activeClient]);
     }
 }

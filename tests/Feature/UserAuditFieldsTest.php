@@ -98,4 +98,41 @@ class UserAuditFieldsTest extends TestCase
             ->assertSee('Creator User')
             ->assertSee('Updater User');
     }
+
+    public function test_default_view_does_not_show_deleted_users(): void
+    {
+        $deletedUser = User::factory()->create(['name' => 'Deleted User', 'email' => 'deleted@example.com']);
+        $deletedUser->delete();
+
+        $activeUser = User::factory()->create(['name' => 'Active User', 'email' => 'active@example.com']);
+
+        Livewire::test(ListUsers::class)
+            ->assertCanSeeTableRecords([$activeUser])
+            ->assertCanNotSeeTableRecords([$deletedUser]);
+    }
+
+    public function test_filter_with_deleted_records_shows_deleted_users(): void
+    {
+        $deletedUser = User::factory()->create(['name' => 'Deleted User', 'email' => 'deleted@example.com']);
+        $deletedUser->delete();
+
+        $activeUser = User::factory()->create(['name' => 'Active User', 'email' => 'active@example.com']);
+
+        Livewire::test(ListUsers::class)
+            ->filterTable('trashed', true)
+            ->assertCanSeeTableRecords([$activeUser, $deletedUser]);
+    }
+
+    public function test_filter_only_deleted_records_shows_only_deleted_users(): void
+    {
+        $deletedUser = User::factory()->create(['name' => 'Deleted User', 'email' => 'deleted@example.com']);
+        $deletedUser->delete();
+
+        $activeUser = User::factory()->create(['name' => 'Active User', 'email' => 'active@example.com']);
+
+        Livewire::test(ListUsers::class)
+            ->filterTable('trashed', false)
+            ->assertCanSeeTableRecords([$deletedUser])
+            ->assertCanNotSeeTableRecords([$activeUser]);
+    }
 }

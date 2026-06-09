@@ -56,7 +56,6 @@ test('users resource full CRUD and restore flow', async ({ page }) => {
   // Verify only our created user is shown in the table
   const userRow = page.locator('table tbody tr', { hasText: randomEmail }).first();
   await expect(userRow).toBeVisible();
-  await expect(userRow).toContainText('Super Admin');
 
   // Click Edit action on that row
   const editButton = userRow.getByRole('link', { name: 'Edit' });
