@@ -3,10 +3,11 @@ import { test, expect } from '@playwright/test';
 test('activities read-only UI and logging flows', async ({ page }) => {
   // 1. Login once
   await page.goto('/admin/login');
+  await page.waitForLoadState('networkidle');
   await page.fill('input[type="email"]', 'admin@madeena.local');
   await page.fill('input[type="password"]', 'admin');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/admin**');
+  await page.keyboard.press('Enter');
+  await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.includes('/login'));
   await page.waitForLoadState('networkidle');
 
   // ==========================================
@@ -28,7 +29,7 @@ test('activities read-only UI and logging flows', async ({ page }) => {
   if (await viewAction.count() > 0) {
     await viewAction.click();
     await expect(page.getByRole('heading', { name: 'View activity' })).toBeVisible();
-    const dialog = page.getByRole('dialog').first();
+    const dialog = page.getByRole('dialog').filter({ hasText: 'View activity' });
     await expect(dialog.locator('button[type="submit"]')).toHaveCount(0);
     // Close the modal
     await page.keyboard.press('Escape');
@@ -71,7 +72,7 @@ test('activities read-only UI and logging flows', async ({ page }) => {
   // Click View to inspect details modal
   await page.getByRole('button', { name: 'View' }).first().click();
   await expect(page.getByRole('heading', { name: 'View activity' })).toBeVisible();
-  const dialog = page.getByRole('dialog').first();
+  const dialog = page.getByRole('dialog').filter({ hasText: 'View activity' });
 
   // Verify Subject input shows client name
   await expect(dialog.getByLabel('Subject', { exact: true })).toHaveValue(clientName);

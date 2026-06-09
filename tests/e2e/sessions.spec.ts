@@ -3,10 +3,11 @@ import { test, expect } from '@playwright/test';
 test('active sessions management: standalone list, relation manager, and self-termination warning flow', async ({ page }) => {
   // 1. Log in as admin
   await page.goto('/admin/login');
+  await page.waitForLoadState('networkidle');
   await page.fill('input[type="email"]', 'admin@madeena.local');
   await page.fill('input[type="password"]', 'admin');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/admin**');
+  await page.keyboard.press('Enter');
+  await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.includes('/login'));
   await page.waitForLoadState('networkidle');
 
   // 2. Navigate to standalone Sessions resource via sidebar
@@ -57,7 +58,7 @@ test('active sessions management: standalone list, relation manager, and self-te
   await relationDeleteButton.click();
 
   // Assert the confirmation modal is shown by checking its heading
-  const dialog = page.getByRole('dialog');
+  const dialog = page.getByRole('dialog').filter({ hasText: 'Terminate Session' });
   await expect(dialog.getByRole('heading', { name: 'Terminate Session' })).toBeVisible();
   await expect(dialog).toContainText('Are you sure you want to terminate this active device session?');
 

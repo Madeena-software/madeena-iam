@@ -3,16 +3,15 @@ import { test, expect } from '@playwright/test';
 test('create oauth client redesign form flow', async ({ page }) => {
   // 1. Navigate to login and authenticate
   await page.goto('/admin/login');
+  await page.waitForLoadState('networkidle');
   
   // Fill credentials
   await page.fill('input[type="email"]', 'admin@madeena.local');
   await page.fill('input[type="password"]', 'admin');
   
   // Submit login
-  await page.click('button[type="submit"]');
-  
-  // Wait for redirect to admin panel and let page settle
-  await page.waitForURL('**/admin**');
+  await page.keyboard.press('Enter');
+  await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.includes('/login'));
   await page.waitForLoadState('networkidle');
 
   // 2. Navigate to Create OAuth Client page
@@ -71,16 +70,15 @@ test('create oauth client redesign form flow', async ({ page }) => {
 test('edit oauth client and reveal secret flow', async ({ page }) => {
   // 1. Navigate to login and authenticate
   await page.goto('/admin/login');
+  await page.waitForLoadState('networkidle');
   
   // Fill credentials
   await page.fill('input[type="email"]', 'admin@madeena.local');
   await page.fill('input[type="password"]', 'admin');
   
   // Submit login
-  await page.click('button[type="submit"]');
-  
-  // Wait for redirect to admin panel and let page settle
-  await page.waitForURL('**/admin**');
+  await page.keyboard.press('Enter');
+  await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.includes('/login'));
   await page.waitForLoadState('networkidle');
 
   // 2. Navigate to Edit OAuth Client page for ebd8ed3e-d9a6-4618-8d63-72f2c8080847

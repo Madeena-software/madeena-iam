@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Models\Session;
-use Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class SessionTest extends TestCase
 {

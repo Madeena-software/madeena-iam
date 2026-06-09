@@ -3,10 +3,11 @@ import { test, expect } from '@playwright/test';
 test('authentication logs read-only UI, details modal, and logout tracking flow', async ({ page }) => {
   // 1. Login as admin (Session 1)
   await page.goto('/admin/login');
+  await page.waitForLoadState('networkidle');
   await page.fill('input[type="email"]', 'admin@madeena.local');
   await page.fill('input[type="password"]', 'admin');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/admin**');
+  await page.keyboard.press('Enter');
+  await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.includes('/login'));
   await page.waitForLoadState('networkidle');
 
   // Go to Authentication Logs list via sidebar
@@ -34,8 +35,8 @@ test('authentication logs read-only UI, details modal, and logout tracking flow'
   // ==========================================
   await page.fill('input[type="email"]', 'admin@madeena.local');
   await page.fill('input[type="password"]', 'admin');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/admin**');
+  await page.keyboard.press('Enter');
+  await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.includes('/login'));
   await page.waitForLoadState('networkidle');
 
   // Go to Authentication Logs list via sidebar
@@ -44,7 +45,7 @@ test('authentication logs read-only UI, details modal, and logout tracking flow'
 
   // The second row corresponds to Session 1 (which has logged out)
   const rows = page.locator('table tbody tr');
-  await expect(rows).toHaveCount(2, { timeout: 10000 }); // There should be at least two sessions logged
+  await expect(rows.nth(1)).toBeVisible({ timeout: 10000 }); // There should be at least two sessions logged
 
   // Verify that the second row has a logout timestamp
   // We check the "Logout at" column in the second row.
@@ -60,7 +61,7 @@ test('authentication logs read-only UI, details modal, and logout tracking flow'
 
   // Verify details modal is visible and contains logout time
   await expect(page.getByRole('heading', { name: 'View authentication log' })).toBeVisible();
-  const dialog = page.getByRole('dialog').first();
+  const dialog = page.getByRole('dialog').filter({ hasText: 'View authentication log' });
 
   const logoutField = dialog.getByLabel('Logout at');
   await expect(logoutField).toBeVisible();
