@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\RelationManagers;
 
 use App\Enums\UserStatus;
+use App\Models\OauthClient;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachAction;
@@ -31,20 +32,22 @@ class ClientsRelationManager extends RelationManager
                     ->maxLength(255)
                     ->disabled()
                     ->dehydrated(false),
-                TextInput::make('client_app_user_id')
+                TextInput::make('pivot.client_app_user_id')
                     ->label('Client App User ID')
-                    ->maxLength(255),
-                Select::make('status')
+                    ->disabled(),
+                Select::make('pivot.status')
                     ->options(UserStatus::class)
                     ->required(),
-                Toggle::make('is_blocked')
+                Toggle::make('pivot.is_blocked')
                     ->label('Is Blocked')
                     ->required(),
-                DateTimePicker::make('approved_at')
+                DateTimePicker::make('pivot.approved_at')
                     ->disabled(),
-                Select::make('approved_by')
-                    ->relationship('approvedBy', 'name')
-                    ->disabled(),
+                TextInput::make('pivot_approved_by_name')
+                    ->label('Approved By')
+                    ->state(fn (?OauthClient $record) => $record?->pivot?->approvedBy?->name ?? '-')
+                    ->disabled()
+                    ->dehydrated(false),
             ]);
     }
 
@@ -67,8 +70,12 @@ class ClientsRelationManager extends RelationManager
                     })
                     ->sortable(),
                 IconColumn::make('pivot.is_blocked')
-                    ->label('Blocked')
+                    ->label('Access')
                     ->boolean()
+                    ->trueIcon('heroicon-o-x-circle')
+                    ->falseIcon('heroicon-o-check-circle')
+                    ->trueColor('danger')
+                    ->falseColor('success')
                     ->sortable(),
                 TextColumn::make('pivot.client_app_user_id')
                     ->label('App User ID')
@@ -106,8 +113,6 @@ class ClientsRelationManager extends RelationManager
                         Toggle::make('is_blocked')
                             ->default(false)
                             ->required(),
-                        TextInput::make('client_app_user_id')
-                            ->label('Client App User ID'),
                     ])
                     ->action(function (array $data, RelationManager $livewire) {
                         $user = $livewire->getOwnerRecord();
@@ -123,7 +128,6 @@ class ClientsRelationManager extends RelationManager
                         $user->clients()->attach($data['client_id'], [
                             'status' => $data['status'],
                             'is_blocked' => $data['is_blocked'],
-                            'client_app_user_id' => $data['client_app_user_id'],
                         ]);
 
                         \Filament\Notifications\Notification::make()
