@@ -10,7 +10,6 @@ use App\Filament\Resources\Users\RelationManagers\SessionsRelationManager;
 use App\Models\Session;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -20,6 +19,7 @@ class FilamentSessionResourceTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $regularUser;
 
     protected function setUp(): void

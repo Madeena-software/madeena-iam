@@ -20,7 +20,7 @@ class ActivitiesTable
                     ->sortable(),
                 TextColumn::make('subject_id')
                     ->label('Subject')
-                    ->formatStateUsing(fn($record) => $record->subject?->name ?? $record->subject_id)
+                    ->formatStateUsing(fn ($record) => $record->subject?->name ?? $record->subject_id)
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('event')
@@ -31,7 +31,7 @@ class ActivitiesTable
                     ->sortable(),
                 TextColumn::make('causer_id')
                     ->label('Causer')
-                    ->formatStateUsing(fn($record) => $record->causer?->name ?? $record->causer_id)
+                    ->formatStateUsing(fn ($record) => $record->causer?->name ?? $record->causer_id)
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('created_at')

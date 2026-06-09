@@ -12,7 +12,7 @@ class UserRelationshipTest extends TestCase
 {
     public function test_creator_relationship_definition(): void
     {
-        $user = new User();
+        $user = new User;
         $relation = $user->creator();
 
         $this->assertInstanceOf(BelongsTo::class, $relation);
@@ -23,7 +23,7 @@ class UserRelationshipTest extends TestCase
 
     public function test_updater_relationship_definition(): void
     {
-        $user = new User();
+        $user = new User;
         $relation = $user->updater();
 
         $this->assertInstanceOf(BelongsTo::class, $relation);
@@ -34,7 +34,7 @@ class UserRelationshipTest extends TestCase
 
     public function test_deleter_relationship_definition(): void
     {
-        $user = new User();
+        $user = new User;
         $relation = $user->deleter();
 
         $this->assertInstanceOf(BelongsTo::class, $relation);

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\AuthenticationLogs\Pages;
 
 use App\Filament\Resources\AuthenticationLogs\AuthenticationLogResource;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListAuthenticationLogs extends ListRecords

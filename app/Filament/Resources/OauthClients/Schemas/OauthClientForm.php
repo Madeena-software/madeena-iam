@@ -2,19 +2,25 @@
 
 namespace App\Filament\Resources\OauthClients\Schemas;
 
+use App\Models\OauthClient;
+use App\Models\Owner;
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Select;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Forms\Components\Hidden;
-use Filament\Infolists\Components\TextEntry;
-use App\Models\Owner;
-use App\Models\OauthClient;
 use Filament\Schemas\Schema;
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 class OauthClientForm
 {
@@ -30,7 +36,7 @@ class OauthClientForm
                     ->hidden(fn (string $operation): bool => $operation === 'create')
                     ->rules(['nullable', 'uuid'])
                     ->suffixAction(
-                        \Filament\Actions\Action::make('copy_client_id')
+                        Action::make('copy_client_id')
                             ->label('Copy Client ID')
                             ->icon('heroicon-o-clipboard-document')
                             ->alpineClickHandler('window.navigator.clipboard.writeText($wire.get(\'data.id\'))')
@@ -67,7 +73,7 @@ class OauthClientForm
                     ->password(fn (Get $get) => ! $get('is_secret_revealed'))
                     ->formatStateUsing(fn ($state) => '••••••••••••••••••••••••••••••••••••••••')
                     ->suffixActions([
-                        \Filament\Actions\Action::make('reveal_secret')
+                        Action::make('reveal_secret')
                             ->icon('heroicon-o-eye')
                             ->hidden(fn (Get $get) => $get('is_secret_revealed'))
                             ->modalHeading('Confirm Password')
@@ -79,13 +85,13 @@ class OauthClientForm
                                     ->required()
                                     ->rules([
                                         fn () => function (string $attribute, $value, \Closure $fail) {
-                                            /** @var \App\Models\User $user */
+                                            /** @var User $user */
                                             $user = request()->user();
-                                            if (! \Illuminate\Support\Facades\Hash::check($value, $user->password)) {
+                                            if (! Hash::check($value, $user->password)) {
                                                 $fail('Incorrect password.');
                                             }
-                                        }
-                                    ])
+                                        },
+                                    ]),
                             ])
                             ->action(function (Get $get, Set $set, $record) {
                                 if ($record) {
@@ -93,7 +99,7 @@ class OauthClientForm
                                     $set('is_secret_revealed', true);
                                 }
                             }),
-                        \Filament\Actions\Action::make('copy_secret')
+                        Action::make('copy_secret')
                             ->icon('heroicon-o-clipboard-document')
                             ->visible(fn (Get $get) => $get('is_secret_revealed'))
                             ->alpineClickHandler('window.navigator.clipboard.writeText($wire.get(\'data.secret\'))')
@@ -143,9 +149,10 @@ class OauthClientForm
                         if (empty($record?->app_logo_path)) {
                             return 'No logo uploaded.';
                         }
-                        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-                        $disk = \Illuminate\Support\Facades\Storage::disk('s3');
-                        return new \Illuminate\Support\HtmlString('<img src="' . $disk->url($record->app_logo_path) . '" alt="App Logo" style="max-height: 100px; border-radius: 8px; border: 1px solid #374151;">');
+                        /** @var FilesystemAdapter $disk */
+                        $disk = Storage::disk('s3');
+
+                        return new HtmlString('<img src="'.$disk->url($record->app_logo_path).'" alt="App Logo" style="max-height: 100px; border-radius: 8px; border: 1px solid #374151;">');
                     }),
                 FileUpload::make('app_logo_path')
                     ->label('Upload App Logo')

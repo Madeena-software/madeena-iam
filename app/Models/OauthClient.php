@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Laravel\Passport\Client as PassportClient;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -98,7 +100,7 @@ class OauthClient extends PassportClient
                 $model->owner_type = 'Company';
             }
             if (empty($model->owner_id)) {
-                $defaultOwner = \App\Models\Owner::firstOrCreate(
+                $defaultOwner = Owner::firstOrCreate(
                     ['name' => 'PT Madeena Karya Indonesia', 'type' => 'Company']
                 );
                 $model->owner_id = $defaultOwner->id;
@@ -162,8 +164,8 @@ class OauthClient extends PassportClient
                 }
 
                 try {
-                    return \Illuminate\Support\Facades\Crypt::decryptString($value);
-                } catch (\Illuminate\Contracts\Encryption\DecryptException) {
+                    return Crypt::decryptString($value);
+                } catch (DecryptException) {
                     return $value;
                 }
             },
@@ -174,9 +176,8 @@ class OauthClient extends PassportClient
                     return null;
                 }
 
-                return \Illuminate\Support\Facades\Crypt::encryptString($value);
+                return Crypt::encryptString($value);
             }
         );
     }
 }
-

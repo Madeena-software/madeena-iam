@@ -259,7 +259,7 @@ class FilamentResourceTest extends TestCase
             ->callTableAction('attach', data: [
                 'client_id' => $client->id,
                 'status' => UserStatus::PENDING_APPROVAL->value,
-                'is_blocked' => false,
+                'access' => true,
             ])
             ->assertHasNoTableActionErrors();
 
@@ -273,7 +273,7 @@ class FilamentResourceTest extends TestCase
             ->mountTableAction('edit', record: $client->id)
             ->setTableActionData([
                 'status' => UserStatus::APPROVED->value,
-                'is_blocked' => true,
+                'is_blocked' => false, // false on Access toggle maps to is_blocked = true in DB
             ])
             ->callMountedTableAction()
             ->assertHasNoTableActionErrors();
@@ -281,5 +281,48 @@ class FilamentResourceTest extends TestCase
         $pivot = $user->clients()->wherePivot('client_id', $client->id)->first()->pivot;
         $this->assertEquals(UserStatus::APPROVED, $pivot->status);
         $this->assertTrue($pivot->is_blocked);
+    }
+
+    public function test_client_user_auto_generates_client_app_user_id(): void
+    {
+        $user = User::factory()->create();
+
+        $client1 = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Auto Generate Client',
+            'redirect_uris' => 'https://it.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+
+        $client2 = OauthClient::create([
+            'id' => Str::uuid()->toString(),
+            'name' => 'Manual Override Client',
+            'redirect_uris' => 'https://it.local/callback',
+            'grant_types' => ['password', 'authorization_code'],
+            'revoked' => false,
+            'is_active' => true,
+        ]);
+
+        // 1. Verify auto-generation when client_app_user_id is not specified
+        $user->clients()->attach($client1->id, [
+            'status' => UserStatus::PENDING_APPROVAL->value,
+            'is_blocked' => false,
+        ]);
+
+        $pivot1 = $user->clients()->wherePivot('client_id', $client1->id)->first()->pivot;
+        $this->assertNotNull($pivot1->client_app_user_id);
+        $this->assertTrue(Str::isUuid($pivot1->client_app_user_id));
+
+        // 2. Verify override is preserved when client_app_user_id is explicitly passed
+        $user->clients()->attach($client2->id, [
+            'status' => UserStatus::PENDING_APPROVAL->value,
+            'is_blocked' => false,
+            'client_app_user_id' => 'custom-external-id-123',
+        ]);
+
+        $pivot2 = $user->clients()->wherePivot('client_id', $client2->id)->first()->pivot;
+        $this->assertEquals('custom-external-id-123', $pivot2->client_app_user_id);
     }
 }

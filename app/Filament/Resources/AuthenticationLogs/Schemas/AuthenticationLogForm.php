@@ -14,7 +14,7 @@ class AuthenticationLogForm
     {
         return $schema
             ->components([
-                 TextInput::make('authenticatable_id')
+                TextInput::make('authenticatable_id')
                     ->label('User')
                     ->formatStateUsing(fn ($record) => $record?->authenticatable?->name ?? $record?->authenticatable_id),
                 TextInput::make('authenticatable_type'),

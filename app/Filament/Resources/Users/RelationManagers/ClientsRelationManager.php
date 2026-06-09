@@ -14,6 +14,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -33,20 +34,22 @@ class ClientsRelationManager extends RelationManager
                     ->maxLength(255)
                     ->disabled()
                     ->dehydrated(false),
-                TextInput::make('client_app_user_id')
+                TextEntry::make('client_app_user_id')
                     ->label('Client App User ID')
-                    ->disabled(),
+                    ->state(fn (?OauthClient $record) => $record?->pivot?->client_app_user_id ?? '-'),
                 Select::make('status')
                     ->options(UserStatus::class)
                     ->required(),
                 Toggle::make('is_blocked')
-                    ->label('Is Blocked')
+                    ->label('Access')
+                    ->formatStateUsing(fn ($state) => ! $state)
+                    ->dehydrateStateUsing(fn ($state) => ! $state)
                     ->required(),
                 DateTimePicker::make('approved_at')
                     ->disabled(),
                 TextEntry::make('approved_by_name')
-                     ->label('Approved By')
-                     ->state(fn (?OauthClient $record) => $record?->pivot?->approvedBy?->name ?? '-'),
+                    ->label('Approved By')
+                    ->state(fn (?OauthClient $record) => $record?->pivot?->approvedBy?->name ?? '-'),
             ]);
     }
 
@@ -109,27 +112,29 @@ class ClientsRelationManager extends RelationManager
                             ->options(UserStatus::class)
                             ->default(UserStatus::PENDING_APPROVAL)
                             ->required(),
-                        Toggle::make('is_blocked')
-                            ->default(false)
+                        Toggle::make('access')
+                            ->label('Access')
+                            ->default(true)
                             ->required(),
                     ])
                     ->action(function (array $data, RelationManager $livewire) {
                         $user = $livewire->getOwnerRecord();
 
                         if ($user->clients()->where('client_id', $data['client_id'])->exists()) {
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Client is already attached to this user.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
                         $user->clients()->attach($data['client_id'], [
                             'status' => $data['status'],
-                            'is_blocked' => $data['is_blocked'],
+                            'is_blocked' => ! $data['access'],
                         ]);
 
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->title('Client attached successfully')
                             ->success()
                             ->send();

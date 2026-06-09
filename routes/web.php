@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Oauth\AuthorizationController;
 use App\Http\Middleware\CheckClientAccess;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     abort(403, 'Unauthorized access.');
@@ -25,9 +26,9 @@ Route::middleware('guest')->group(function () {
 Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 Route::get('storage/{path}', function ($path) {
-    if (! \Illuminate\Support\Facades\Storage::disk('s3')->exists($path)) {
+    if (! Storage::disk('s3')->exists($path)) {
         abort(404);
     }
-    return \Illuminate\Support\Facades\Storage::disk('s3')->response($path);
-})->where('path', '.*');
 
+    return Storage::disk('s3')->response($path);
+})->where('path', '.*');

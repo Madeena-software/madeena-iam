@@ -2,16 +2,17 @@
 
 namespace App\Providers;
 
+use App\Bridge\ClientRepository;
 use App\Http\Controllers\Oauth\AuthorizationController;
 use App\Listeners\LogFailedLogin;
 use App\Listeners\LogSuccessfulLogin;
 use App\Listeners\LogSuccessfulLogout;
+use App\Models\Owner;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use App\Models\Owner;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -31,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(
             \Laravel\Passport\Bridge\ClientRepository::class,
-            \App\Bridge\ClientRepository::class
+            ClientRepository::class
         );
     }
 
