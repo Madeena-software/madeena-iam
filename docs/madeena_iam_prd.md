@@ -28,31 +28,52 @@ Instead of duplicating user databases and login flows across multiple applicatio
 
 ## 4. System Architecture & Flow
 
-### 4.1. Detailed API Login Flow (No Redirects)
-In this flow, the user submits credentials directly to the client application (e.g., Workspace), and the client app executes a direct server-to-server API call to the IAM server.
+### 4.1. Detailed OAuth2 Redirect Login Flow (Standard SSO - Primary)
+In this primary flow, the user clicks login on the Client Application, and the Client App redirects the user's browser to the central SSO Server. The user submits credentials directly to the IAM server, and upon successful authentication, is redirected back to the Client Application with an authorization code.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as End User
+    participant Browser as User's Browser
     participant App as Client App (e.g., Workspace)
     participant IAM as madeena-iam (SSO Server)
     participant DB as Central Database
 
-    User->>App: Enters Email & Password on Workspace login form
-    App->>IAM: POST /api/v1/auth/login<br>(Payload: email, password, client_id, client_secret)
+    User->>Browser: Clicks "Login" button on Workspace
+    App->>Browser: Redirects to madeena-iam login endpoint
+    Browser->>IAM: GET /oauth/authorize?<br>response_type=code<br>&client_id=workspace_id<br>&redirect_uri=https://workspace.mahcsgo.cloud/callback<br>&state=csrf_state
     
-    IAM->>DB: Validates credentials & status = 'approved'
+    Note over IAM: Checks for active SSO session cookie
+    
+    alt SSO Session NOT Active
+        IAM-->>Browser: Redirects to /login
+        Browser->>User: Displays central Login Form
+        User->>Browser: Enters Email & Password
+        Browser->>IAM: POST /login (Payload: email, password)
+        IAM->>DB: Validates credentials & status = 'approved'
+        IAM->>IAM: Sets session cookie & authenticates user
+        IAM-->>Browser: Redirects back to /oauth/authorize (intended URL)
+    end
+
     IAM->>DB: Checks client_user table: Is User allowed to access Client?
     
-    alt Credentials Invalid, Suspended, or Blocked
-        IAM-->>App: Returns error response (401 Unauthorized / 403 Forbidden)
-        App-->>User: Displays error message ("Invalid credentials" or "Pending approval")
-    else Access Granted
-        IAM->>IAM: Establishes central SSO session & generates Access Token (JWT)
-        IAM-->>App: Returns 200 OK + access_token + user_profile + sso_session_id
-        Note over App: App stores access_token locally & establishes local session cookie
-        App-->>User: Displays Workspace Dashboard (Logged In)
+    alt Permission Denied
+        IAM-->>Browser: Redirect to Workspace callback with access_denied error
+        Browser-->>App: GET /callback?error=access_denied&state=csrf_state
+        App-->>User: Displays error screen ("Not authorized for Workspace")
+    else Permission Granted
+        IAM->>IAM: Generates temporary Authorization Code
+        IAM-->>Browser: Redirect to Workspace callback with code
+        Browser-->>App: GET /callback?code=AUTH_CODE&state=csrf_state
+        
+        %% Back-channel Token Exchange
+        App->>IAM: POST /oauth/token<br>(Payload: grant_type=authorization_code, code, client_id, client_secret, redirect_uri)
+        IAM->>DB: Validates Authorization Code & Client Credentials
+        IAM-->>App: Returns JSON payload (access_token, refresh_token, user_profile)
+        Note over App: App stores access_token & starts local session
+        App-->>Browser: Redirects to /dashboard
+        Browser-->>User: Displays Workspace Dashboard (Logged In)
     end
 ```
 
@@ -161,6 +182,36 @@ sequenceDiagram
     Admin->>Filament: Views User Details or App Permissions Tab
     Admin->>Filament: Toggles allowed applications for User A (Workspace: Yes, ERP: No)
     Filament->>DB: Updates client_user pivot table
+```
+
+---
+
+### 4.5. Alternative Direct API Login Flow (No Redirects - Secondary)
+For cases where redirect-based authentication is not suitable (such as native mobile applications or command-line interfaces), `madeena-iam` provides a direct backend credential-verification API. In this flow, the client app displays the login form, collects the user's email and password, and makes a server-to-server request to IAM.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as End User
+    participant App as Client App (e.g., Workspace)
+    participant IAM as madeena-iam (SSO Server)
+    participant DB as Central Database
+
+    User->>App: Enters Email & Password on Workspace login form
+    App->>IAM: POST /api/v1/auth/login<br>(Payload: email, password, client_id, client_secret)
+    
+    IAM->>DB: Validates credentials & status = 'approved'
+    IAM->>DB: Checks client_user table: Is User allowed to access Client?
+    
+    alt Credentials Invalid, Suspended, or Blocked
+        IAM-->>App: Returns error response (401 Unauthorized / 403 Forbidden)
+        App-->>User: Displays error message ("Invalid credentials" or "Pending approval")
+    else Access Granted
+        IAM->>IAM: Establishes central SSO session & generates Access Token (JWT)
+        IAM-->>App: Returns 200 OK + access_token + user_profile + sso_session_id
+        Note over App: App stores access_token locally & establishes local session cookie
+        App-->>User: Displays Workspace Dashboard (Logged In)
+    end
 ```
 
 ---

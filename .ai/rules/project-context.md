@@ -11,12 +11,12 @@ To maintain absolute security, security audits, and architectural independence, 
 
 ## 2. Key Features & Flows
 
-- **Centralized Single Sign-On (SSO)**: Users log in once and gain seamless access to authorized applications.
-- **Granular Access Control**: Direct assignment or revocation of application access for users from a central control panel.
-- **SSO Silent Session Sync (`prompt=none`)**: Supports standard OAuth2/OIDC `prompt=none` redirect logic so client apps can silently verify if a user has an active session cookie on `sso.mhcsgo.cloud` and sign them in automatically.
-- **API-Driven Credentials Verification**:
-  - `POST /api/v1/auth/login`: Direct server-to-server login check (validates credentials, client permissions, status = `approved`).
+- **Centralized Single Sign-On (SSO - Primary)**: Redirect-based OAuth2/OIDC Authorization Code Grant (`/oauth/authorize` and `/oauth/token`). Users log in once and gain seamless access.
+- **SSO Silent Session Sync (`prompt=none`)**: Supports standard `prompt=none` redirect logic so client apps can silently verify if a user has an active session cookie on `sso.mhcsgo.cloud` and sign them in.
+- **Alternative Direct API Login (Secondary)**:
+  - `POST /api/v1/auth/login`: Direct server-to-server credentials verification (validates credentials, client permissions, status = `approved`) returning a Personal Access Token.
   - `POST /api/v1/auth/register`: Adds user in `pending_approval` status, requiring admin validation.
+- **Granular Access Control**: Direct assignment or revocation of application access for users from a central control panel.
 - **Admin Configuration**: App registry configuration and permission mappings (via Filament Admin Panel on `sso.mhcsgo.cloud`).
 - **Audit Trails**: Logs all logins, logouts, IPs, user agents, accessed clients, and status (`success`, `failed_password`, `blocked_app`).
 - **Remote Session Revocation**: Allows users and admins to remotely view and terminate active device sessions.

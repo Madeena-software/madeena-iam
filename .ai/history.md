@@ -340,3 +340,21 @@ Diagnose why soft-deleted users were still showing up in the "Users" list filter
 ### Results
 - ✅ **Success**: Identified the residue source as the E2E test restore flow. Updated the E2E test suite to execute a complete force-delete cleanup, ensuring database cleanliness.
 
+## [2026-06-10] Session 17: Update PRD and Project Context with Redirect-based OAuth2 SSO Flow
+
+### Objective
+Update the System Architecture & Flow documentation in the PRD and guidelines to follow a standard redirect-based OAuth2 SSO flow (similar to `https://sso.ugm.ac.id/`), keeping the direct API-based authentication as a secondary developer alternative.
+
+### Actions Performed
+1. **PRD Alignment**:
+   - Modified [madeena_iam_prd.md](file:///var/www/madeena-iam/docs/madeena_iam_prd.md) to set standard Redirect-based OAuth2 Login Flow (using Passport's authorization code grant with `/oauth/authorize` and `/oauth/token`) as the primary architecture in Section 4.1.
+   - Preserved and relegated the direct credential-verification API to a new Section 4.5: Alternative Direct API Login Flow (No Redirects - Secondary).
+2. **Project Context Updates**:
+   - Updated [.ai/rules/project-context.md](file:///var/www/madeena-iam/.ai/rules/project-context.md) to list Redirect-based SSO as the primary flow and Direct API login as a secondary developer option.
+3. **Execution & Validation**:
+   - Created `task.md`, `implementation_plan.md`, and `walkthrough.md` artifacts to design, execute, and verify the updates.
+   - Ran all automated test suites to ensure 100% pass rate (70 tests, 385 assertions) with no regressions to standard OAuth2 or API endpoints.
+
+### Results
+- ✅ **Success**: Documentation updated to promote redirect-based SSO as primary, preserving direct API authentication as secondary, and validated that no codebase regressions occurred.
+

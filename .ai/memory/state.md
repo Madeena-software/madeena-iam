@@ -52,6 +52,7 @@
 - **Milestone 25**: Resolved duplicate login tracking by removing manual event listeners in `AppServiceProvider.php` (which conflicted with Laravel's automatic listener discovery). Verified successful single login logging and logout tracking via updated Playwright E2E test `authentication-logs.spec.ts`.
 - **Milestone 26**: Resolved and displayed creator, updater, and deleter names in the User resource index and detail/edit views. Added self-referential model relationships, refactored Livewire table columns with prefix-qualified columns to prevent SQL self-join query ambiguity, and verified with Unit, Feature, and Playwright E2E test suites (100% green).
 - **Milestone 54**: Diagnosed E2E test residue leakage (restored test users left active). Updated `tests/e2e/users.spec.ts` to perform a full delete and force-delete cleanup at the end of the test. Verified with 100% passing E2E tests.
+- **Milestone 55**: Transitioned the primary login flow design in `docs/madeena_iam_prd.md` and `.ai/rules/project-context.md` to represent standard redirect-based OAuth2 SSO, while keeping direct API login as a secondary option.
 
 ---
 
