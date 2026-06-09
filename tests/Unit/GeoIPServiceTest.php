@@ -11,7 +11,7 @@ class GeoIPServiceTest extends TestCase
 {
     public function test_resolve_location_for_local_ips(): void
     {
-        $localIps = ['127.0.0.1', '::1', '', null];
+        $localIps = ['127.0.0.1', '::1', '', null, '0'];
 
         foreach ($localIps as $ip) {
             $result = GeoIPService::resolveLocation($ip);

@@ -90,4 +90,19 @@ class PasswordResetTest extends TestCase
 
         $this->assertTrue(Hash::check('new-password123', $this->user->fresh()->password));
     }
+
+    public function test_password_reset_fails_with_nonexistent_email(): void
+    {
+        $token = Password::broker()->createToken($this->user);
+
+        $response = $this->post(route('password.update'), [
+            'token' => $token,
+            'email' => 'nonexistent@example.com',
+            'password' => 'new-password123',
+            'password_confirmation' => 'new-password123',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
+        $this->assertTrue(Hash::check('old-secure-password123', $this->user->fresh()->password));
+    }
 }
