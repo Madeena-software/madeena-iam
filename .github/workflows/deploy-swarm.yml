@@ -1,0 +1,530 @@
+name: Deploy to Production (Swarm)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Madeena Standard CI/CD Template — Docker Swarm Deployment (AWS S3 Edition)
+#
+# REQUIRED GITHUB SECRETS:
+#   APP_KEY, APP_DOMAIN, SSH_USER, REMOTE_PATH
+#   DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_ROOT_PASSWORD
+#   MINIO_ACCESS_KEY_ID, MINIO_SECRET_ACCESS_KEY, MINIO_BUCKET, MINIO_ENDPOINT
+#
+# OPTIONAL GITHUB SECRETS:
+#   SUDO_PASSWORD, MAIL_USERNAME, MAIL_PASSWORD, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD
+# ═══════════════════════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-madeena-iam-production
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_OPTIONS: "--dns-result-order=ipv4first"
+
+jobs:
+  build:
+    name: Build Docker Image (Local)
+    runs-on: self-hosted
+    timeout-minutes: 25
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve app version
+        id: version
+        run: |
+          set -euo pipefail
+          APP_VERSION="$(cat VERSION 2>/dev/null || echo latest)"
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Deploy version: ${APP_VERSION}"
+
+      - name: Build Docker image locally
+        run: |
+          set -euo pipefail
+          echo "===> Building \"madeena-iam\":latest on local runner..."
+          docker build \
+            --build-arg APP_VERSION="${{ steps.version.outputs.app_version }}" \
+            --tag "madeena-iam":latest \
+            --file ./Dockerfile \
+            .
+          docker image inspect "madeena-iam":latest --format 'ID: {{.Id}} | Size: {{.Size}} bytes'
+
+  deploy:
+    name: Deploy to Production
+    runs-on: self-hosted
+    needs: build
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via Docker Swarm
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SUDO_PASSWORD: ${{ secrets.SUDO_PASSWORD }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          SUPER_ADMIN_EMAIL: ${{ secrets.SUPER_ADMIN_EMAIL }}
+          SUPER_ADMIN_PASSWORD: ${{ secrets.SUPER_ADMIN_PASSWORD }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
+          AWS_BUCKET: ${{ secrets.MINIO_BUCKET }}
+          AWS_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          APP_VERSION: ${{ needs.build.outputs.app_version }}
+        run: |
+          set -euo pipefail
+
+          require_env() {
+            var="$1"
+            val="$(eval "printf '%s' \"\${${var}:-}\"")"
+            if [ -z "$val" ]; then
+              echo "FATAL: ${var} is missing or empty."
+              exit 1
+            fi
+          }
+
+          for var in APP_KEY APP_DOMAIN REMOTE_PATH DB_HOST DB_DATABASE DB_USERNAME DB_PASSWORD DB_ROOT_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_BUCKET AWS_ENDPOINT; do
+            require_env "$var"
+          done
+
+          if [ "$DB_HOST" = "127.0.0.1" ] || [ "$DB_HOST" = "localhost" ]; then
+            echo "FATAL: DB_HOST is '$DB_HOST'. Use the Swarm service name: db."
+            exit 1
+          fi
+
+          if [ "$DB_HOST" != "db" ]; then
+            echo "FATAL: DB_HOST must be 'db' for the Swarm deployment."
+            exit 1
+          fi
+
+          _sudo() {
+            if [ -n "${SUDO_PASSWORD:-}" ]; then
+              echo "$SUDO_PASSWORD" | sudo -S "$@" 2>/dev/null
+            else
+              sudo "$@"
+            fi
+          }
+
+          export LIVE_VERSION="${APP_VERSION:-unknown}"
+          export APP_STORAGE_HOST_PATH="/var/lib/madeena-iam/storage"
+          export APP_LOGS_HOST_PATH="/var/lib/madeena-iam/logs"
+          export MYSQL_DATA_HOST_PATH="/var/lib/madeena-iam/mysql"
+
+          echo "===> Clearing exited containers from previous runs..."
+          docker container prune -f || true
+
+          echo "===> Preparing persistent host paths..."
+          _sudo mkdir -p \
+            "$APP_STORAGE_HOST_PATH/app/private" \
+            "$APP_LOGS_HOST_PATH" \
+            "$MYSQL_DATA_HOST_PATH"
+          _sudo chown -R www-data:www-data "$APP_STORAGE_HOST_PATH" "$APP_LOGS_HOST_PATH" 2>/dev/null || true
+          _sudo chmod -R 775 "$APP_STORAGE_HOST_PATH" "$APP_LOGS_HOST_PATH" 2>/dev/null || true
+          _sudo chown 999:999 "$MYSQL_DATA_HOST_PATH" 2>/dev/null || true
+          _sudo chmod 750 "$MYSQL_DATA_HOST_PATH" 2>/dev/null || true
+
+          echo "===> Preparing deployment root..."
+          if [ "$REMOTE_PATH" = "/var/www" ] || [ "$REMOTE_PATH" = "/srv" ] || [ "$REMOTE_PATH" = "/opt" ] || [ "$REMOTE_PATH" = "/var" ]; then
+            echo "FATAL: REMOTE_PATH must be a dedicated app directory, not a shared root."
+            exit 1
+          fi
+
+          _sudo mkdir -p "$REMOTE_PATH"
+          _sudo chown -R "$(id -un):$(id -gn)" "$REMOTE_PATH"
+
+          if [ ! -w "$REMOTE_PATH" ]; then
+            echo "FATAL: Runner user $(id -un) cannot write to $REMOTE_PATH."
+            ls -ld "$REMOTE_PATH" || true
+            exit 1
+          fi
+
+          cd "$REMOTE_PATH"
+          cp "$GITHUB_WORKSPACE/docker-compose.prod.yml" docker-compose.prod.yml
+          mkdir -p nginx/conf.d
+          cp "$GITHUB_WORKSPACE/docker/nginx.conf" nginx/conf.d/app.conf
+          echo "$LIVE_VERSION" > VERSION-CURRENT
+
+          echo "===> Writing environment file..."
+          printf '%s\n' \
+            'APP_NAME="madeena-iam"' \
+            'APP_DISPLAY_NAME="Madeena IAM"' \
+            'APP_ENV=production' \
+            'APP_DEBUG=false' \
+            'APP_TIMEZONE=Asia/Jakarta' \
+            '' \
+            'LOG_CHANNEL=stack' \
+            'LOG_STACK=single' \
+            'LOG_LEVEL=error' \
+            '' \
+            'DB_CONNECTION=mysql' \
+            'DB_PORT=3306' \
+            '' \
+            'BROADCAST_CONNECTION=log' \
+            'FILESYSTEM_DISK=local' \
+            'AWS_USE_PATH_STYLE_ENDPOINT=true' \
+            'AWS_DEFAULT_REGION=id' \
+            'AWS_STORAGE_THROW=true' \
+            'QUEUE_CONNECTION=database' \
+            'CACHE_STORE=database' \
+            'SESSION_DRIVER=database' \
+            'SESSION_LIFETIME=120' \
+            '' \
+            "APP_STORAGE_HOST_PATH=${APP_STORAGE_HOST_PATH}" \
+            "APP_LOGS_HOST_PATH=${APP_LOGS_HOST_PATH}" \
+            "MYSQL_DATA_HOST_PATH=${MYSQL_DATA_HOST_PATH}" \
+            '' \
+            'MAIL_MAILER=smtp' \
+            'MAIL_SCHEME=null' \
+            'MAIL_HOST=smtp.gmail.com' \
+            'MAIL_PORT=587' \
+            'MAIL_ENCRYPTION=tls' \
+            'VITE_APP_NAME="Madeena IAM"' \
+            > .env
+
+          {
+            printf 'APP_KEY=%s\n' "$APP_KEY"
+            printf 'APP_URL=https://%s\n' "$APP_DOMAIN"
+            printf 'DB_HOST=%s\n' "$DB_HOST"
+            printf 'DB_DATABASE=%s\n' "$DB_DATABASE"
+            printf 'DB_USERNAME=%s\n' "$DB_USERNAME"
+            printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
+            printf 'DB_ROOT_PASSWORD=%s\n' "$DB_ROOT_PASSWORD"
+            printf 'MAIL_USERNAME=%s\n' "$MAIL_USERNAME"
+            printf 'MAIL_PASSWORD=%s\n' "$MAIL_PASSWORD"
+            printf 'MAIL_FROM_ADDRESS=%s\n' "$MAIL_USERNAME"
+            printf 'MAIL_FROM_NAME=%s\n' "Madeena IAM"
+            printf 'SUPER_ADMIN_EMAIL=%s\n' "$SUPER_ADMIN_EMAIL"
+            printf 'SUPER_ADMIN_PASSWORD=%s\n' "$SUPER_ADMIN_PASSWORD"
+            printf 'AWS_ACCESS_KEY_ID=%s\n' "$AWS_ACCESS_KEY_ID"
+            printf 'AWS_SECRET_ACCESS_KEY=%s\n' "$AWS_SECRET_ACCESS_KEY"
+            printf 'AWS_BUCKET=%s\n' "$AWS_BUCKET"
+            printf 'AWS_ENDPOINT=%s\n' "$AWS_ENDPOINT"
+            printf 'APP_VERSION=%s\n' "$LIVE_VERSION"
+          } >> .env
+
+          echo "===> Swarm manager preflight..."
+          SWARM_STATE="$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null || echo unknown)"
+          SWARM_MANAGER="$(docker info --format '{{.Swarm.ControlAvailable}}' 2>/dev/null || echo false)"
+          if [ "$SWARM_STATE" != "active" ] || [ "$SWARM_MANAGER" != "true" ]; then
+            echo "FATAL: Docker Swarm is not active or this node is not a manager."
+            echo "State: $SWARM_STATE | Manager: $SWARM_MANAGER"
+            exit 1
+          fi
+
+          echo "===> Verifying local image \"madeena-iam\":latest..."
+          docker image inspect "madeena-iam":latest >/dev/null 2>&1 || {
+            echo "FATAL: \"madeena-iam\":latest is not available locally."
+            exit 1
+          }
+
+          echo "===> MinIO S3 connectivity preflight..."
+          S3_HOSTNAME="$(echo "$AWS_ENDPOINT" | sed -n 's|^http[s]*://\([^:/]*\).*|\1|p')"
+          S3_PORT="$(echo "$AWS_ENDPOINT" | sed -n 's|^http[s]*://[^:]*:\([0-9]*\).*|\1|p; t; s|^http://.*|80|p; s|^https://.*|443|p')"
+          echo "  S3 endpoint: ${S3_HOSTNAME}:${S3_PORT}"
+          if ! timeout 5 bash -c "</dev/tcp/${S3_HOSTNAME}/${S3_PORT}" 2>/dev/null; then
+            echo "FATAL: MinIO S3 endpoint is not reachable from the host."
+            exit 1
+          fi
+          echo "  S3 host connectivity: ok"
+
+          echo "===> Laravel S3 storage preflight from container..."
+          docker run --rm \
+            --entrypoint php \
+            --env-file .env \
+            "madeena-iam":latest \
+            artisan storage:check --disk=public --disk=enterprise_backups -v
+
+          echo "===> Deploying stack..."
+          docker stack deploy \
+            --resolve-image changed \
+            -c docker-compose.prod.yml madeena-iam
+
+          echo "===> Force updating app and queue services with new image..."
+          sleep 5
+          docker service update --force --image "madeena-iam":latest madeena-iam_app || true
+          docker service update --force --image "madeena-iam":latest madeena-iam_queue || true
+
+          echo "===> [1/3] Waiting for database to be healthy..."
+          _WAIT_DB=0
+          until [ "$(docker ps -q -f name=madeena-iam_db -f status=running | head -n 1 | xargs -I {} docker inspect --format='{{.State.Health.Status}}' {} 2>/dev/null)" = "healthy" ]; do
+            if [ "$_WAIT_DB" -ge 300 ]; then
+              echo "FATAL: DB health check timed out."
+              docker service logs madeena-iam_db --tail=80 2>/dev/null || true
+              docker stack ps madeena-iam || true
+              exit 1
+            fi
+            sleep 5
+            _WAIT_DB=$((_WAIT_DB + 5))
+            echo "  DB not healthy yet (${_WAIT_DB}s elapsed)"
+          done
+          echo "DB healthy."
+
+          echo "===> [2/3] Waiting for app to be healthy..."
+          _WAIT_APP=0
+          until [ "$(docker ps -q -f name=madeena-iam_app -f status=running | head -n 1 | xargs -I {} docker inspect --format='{{.State.Health.Status}}' {} 2>/dev/null)" = "healthy" ]; do
+            if [ "$_WAIT_APP" -ge 300 ]; then
+              echo "FATAL: app health check timed out."
+              docker service logs madeena-iam_app --tail=100 2>/dev/null || true
+              docker stack ps madeena-iam || true
+              exit 1
+            fi
+            sleep 5
+            _WAIT_APP=$((_WAIT_APP + 5))
+            echo "  App not healthy yet (${_WAIT_APP}s elapsed)"
+          done
+
+          CONTAINER="$(docker ps -q -f name=madeena-iam_app -f status=running | head -n 1)"
+          echo "App healthy: $CONTAINER"
+
+          echo "===> [3/3] Running post-deploy migrations and seeders..."
+          set +e
+          MIGRATE_OUTPUT="$(docker exec "$CONTAINER" php artisan migrate --force --seed 2>&1)"
+          MIGRATE_EXIT=$?
+          set -e
+          if [ "$MIGRATE_EXIT" -ne 0 ]; then
+            if echo "$MIGRATE_OUTPUT" | grep -q "SQLSTATE\[42S01\]"; then
+              echo "Existing-table conflict detected; retrying migrate only."
+              docker exec "$CONTAINER" php artisan migrate --force
+            else
+              echo "$MIGRATE_OUTPUT"
+              exit 1
+            fi
+          fi
+
+          echo "===> Waiting for queue worker..."
+          _WAIT_Q=0
+          until docker ps -q -f name=madeena-iam_queue -f status=running | head -n 1 | grep -q .; do
+            if [ "$_WAIT_Q" -ge 120 ]; then
+              echo "FATAL: queue worker did not start."
+              docker service logs madeena-iam_queue --tail=80 2>/dev/null || true
+              exit 1
+            fi
+            sleep 5
+            _WAIT_Q=$((_WAIT_Q + 5))
+          done
+          echo "Queue worker running."
+
+          docker exec "$CONTAINER" chown -R www-data:www-data storage bootstrap/cache || true
+          docker exec "$CONTAINER" chmod -R 775 storage bootstrap/cache || true
+
+          echo "===> Testing Nginx configuration..."
+          _WAIT_NGINX=0
+          until docker ps -q -f name=madeena-iam_nginx -f status=running | head -n 1 | grep -q .; do
+            if [ "$_WAIT_NGINX" -ge 120 ]; then
+              echo "FATAL: Nginx did not start."
+              docker service logs madeena-iam_nginx --tail=80 2>/dev/null || true
+              exit 1
+            fi
+            sleep 5
+            _WAIT_NGINX=$((_WAIT_NGINX + 5))
+          done
+
+          NGINX_CONTAINER="$(docker ps -q -f name=madeena-iam_nginx -f status=running | head -n 1)"
+          docker exec "$NGINX_CONTAINER" sh -c "nginx -t && nginx -s reload"
+          docker stack ps madeena-iam
+          echo "Deployment complete."
+
+      - name: Strict image cleanup
+        if: always()
+        run: |
+          set -euo pipefail
+          LEGACY_REFS="$(docker images --format '{{.Repository}}:{{.Tag}}' | awk '$0 ~ /^madeena-iam:/ && $0 != "madeena-iam:latest"' || true)"
+          if [ -n "${LEGACY_REFS:-}" ]; then
+            while IFS= read -r ref; do
+              [ -z "$ref" ] && continue
+              docker image rm -f "$ref" || true
+            done <<< "$LEGACY_REFS"
+          fi
+          docker container prune -f || true
+          docker image prune -f || true
+          docker builder prune --filter "until=24h" -f || true
+
+      - name: Health check
+        env:
+          APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 10); do
+            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 30 "http://${{ secrets.SSH_HOST }}:8012" || echo "000")
+            echo "Attempt $attempt/10 — HTTP $HTTP_STATUS"
+            echo "$HTTP_STATUS" | grep -qE '^(200|301|302|307|308)$' && { echo "✅ Healthy"; exit 0; }
+            sleep 10
+          done
+
+          echo "Health check failed."
+          docker exec "$(docker ps -q -f name=madeena-iam_app -f status=running | head -n 1)" tail -n 80 storage/logs/laravel.log 2>/dev/null || true
+          docker service logs madeena-iam_app --tail=100 2>/dev/null || true
+          docker service logs madeena-iam_nginx --tail=100 2>/dev/null || true
+          docker stack ps madeena-iam 2>/dev/null || true
+          exit 1
+
+      - name: Post-deploy verification
+        run: |
+          set -euo pipefail
+          PASS=0
+          FAIL=0
+          WARN=0
+
+          _pass() { PASS=$((PASS + 1)); echo "  PASS: $1"; }
+          _fail() { FAIL=$((FAIL + 1)); echo "  FAIL: $1"; }
+          _warn() { WARN=$((WARN + 1)); echo "  WARN: $1"; }
+
+          echo "===> Waiting for Swarm services to settle..."
+          for svc in madeena-iam_app madeena-iam_db madeena-iam_nginx madeena-iam_queue; do
+            _WAIT_REPL=0
+            until [ "$(docker service ls --format '{{.Replicas}}' --filter "name=${svc}" 2>/dev/null | head -n 1)" = "1/1" ]; do
+              if [ "$_WAIT_REPL" -ge 180 ]; then
+                docker service logs "$svc" --tail=120 2>/dev/null || true
+                docker service ps "$svc" --no-trunc 2>/dev/null || true
+                exit 1
+              fi
+              sleep 5
+              _WAIT_REPL=$((_WAIT_REPL + 5))
+            done
+          done
+
+          echo "===> Post-deploy verification report"
+
+          echo "1/8 Service replicas"
+          for svc in madeena-iam_app madeena-iam_db madeena-iam_nginx madeena-iam_queue; do
+            replicas="$(docker service ls --format '{{.Replicas}}' --filter "name=${svc}" 2>/dev/null || echo "")"
+            if [ "$replicas" = "1/1" ]; then
+              _pass "$svc: $replicas"
+            else
+              _fail "$svc: $replicas"
+            fi
+          done
+
+          echo "2/8 Health checks"
+          for svc in madeena-iam_app madeena-iam_db; do
+            container="$(docker ps -q -f name="${svc}" -f status=running | head -n 1)"
+            health="$(docker inspect --format='{{.State.Health.Status}}' "$container" 2>/dev/null || echo none)"
+            if [ "$health" = "healthy" ]; then
+              _pass "$svc health: $health"
+            else
+              _fail "$svc health: $health"
+            fi
+          done
+
+          echo "3/8 Update and rollback policy"
+          for svc in madeena-iam_app madeena-iam_db madeena-iam_nginx madeena-iam_queue; do
+            update_order="$(docker service inspect "$svc" --format='{{.Spec.UpdateConfig.Order}}' 2>/dev/null || echo "")"
+            failure_action="$(docker service inspect "$svc" --format='{{.Spec.UpdateConfig.FailureAction}}' 2>/dev/null || echo "")"
+            rollback_order="$(docker service inspect "$svc" --format='{{.Spec.RollbackConfig.Order}}' 2>/dev/null || echo "")"
+            expected="stop-first"
+            if [ "$svc" = "madeena-iam_app" ] || [ "$svc" = "madeena-iam_nginx" ]; then
+              expected="start-first"
+            fi
+            if [ "$update_order" = "$expected" ] && [ "$failure_action" = "rollback" ] && [ "$rollback_order" = "$expected" ]; then
+              _pass "$svc: update=$update_order rollback=$rollback_order"
+            else
+              _fail "$svc: update=$update_order failure=$failure_action rollback=$rollback_order"
+            fi
+          done
+
+          echo "4/8 Resource limits"
+          for svc in madeena-iam_app madeena-iam_db madeena-iam_nginx madeena-iam_queue; do
+            mem_limit="$(docker service inspect "$svc" --format='{{.Spec.TaskTemplate.Resources.Limits.MemoryBytes}}' 2>/dev/null || echo 0)"
+            if [ "${mem_limit:-0}" -gt 0 ] 2>/dev/null; then
+              _pass "$svc memory limit set"
+            else
+              _fail "$svc memory limit missing"
+            fi
+          done
+
+          echo "5/8 Queue worker"
+          queue_cmd="$(docker service inspect madeena-iam_queue --format='{{join .Spec.TaskTemplate.ContainerSpec.Args " "}}' 2>/dev/null || echo "")"
+          if echo "$queue_cmd" | grep -q "queue:work"; then
+            _pass "queue:work command configured"
+          else
+            _fail "queue:work command missing"
+          fi
+          grace="$(docker service inspect madeena-iam_queue --format='{{.Spec.TaskTemplate.ContainerSpec.StopGracePeriod}}' 2>/dev/null || echo "")"
+          if [ -n "$grace" ]; then
+            _pass "queue stop grace period: $grace"
+          else
+            _warn "queue stop grace period missing"
+          fi
+
+          echo "6/8 Storage mounts"
+          app_container="$(docker ps -q -f name=madeena-iam_app -f status=running | head -n 1)"
+          full_storage_mount="$(docker inspect "$app_container" --format='{{range .Mounts}}{{if eq .Destination "/var/www/html/storage"}}{{.Destination}}{{end}}{{end}}' 2>/dev/null || true)"
+          if [ -z "$full_storage_mount" ]; then
+            _pass "full storage tree is not shared"
+          else
+            _fail "full storage tree is mounted"
+          fi
+          storage_app_mount="$(docker inspect "$app_container" --format='{{range .Mounts}}{{if eq .Destination "/var/www/html/storage/app"}}{{.Type}}:{{.Source}}{{end}}{{end}}' 2>/dev/null || true)"
+          if [ -n "$storage_app_mount" ]; then
+            _pass "storage/app mounted: $storage_app_mount"
+          else
+            _fail "storage/app mount missing"
+          fi
+          if docker exec "$app_container" sh -c 'test -d storage/framework/views && test -w storage/framework/views'; then
+            _pass "framework views path is container-local and writable"
+          else
+            _fail "framework views path is not writable"
+          fi
+
+          echo "7/8 S3 storage disks"
+          if docker exec "$app_container" php artisan storage:check --disk=public --disk=enterprise_backups -v; then
+            _pass "S3 public and backup disks verified"
+          else
+            _fail "S3 storage check failed"
+          fi
+
+          echo "8/8 /storage media streaming"
+          media_probe="deploy-check-$(date -u +%Y%m%d%H%M%S).txt"
+          media_payload="madeena-cp-media-${media_probe}"
+          docker exec -e MEDIA_PROBE="$media_probe" -e MEDIA_PAYLOAD="$media_payload" "$app_container" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); Illuminate\Support\Facades\Storage::disk("public")->put(getenv("MEDIA_PROBE"), getenv("MEDIA_PAYLOAD"));'
+          fetched="$(curl -fsS --max-time 10 "http://127.0.0.1:8012/storage/${media_probe}" || true)"
+          docker exec -e MEDIA_PROBE="$media_probe" "$app_container" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); Illuminate\Support\Facades\Storage::disk("public")->delete(getenv("MEDIA_PROBE"));' || true
+          if [ "$fetched" = "$media_payload" ]; then
+            _pass "/storage route streams public disk media"
+          else
+            _fail "/storage route did not return uploaded media"
+          fi
+
+          echo "Results: ${PASS} passed | ${FAIL} failed | ${WARN} warnings"
+          {
+            echo "# Deploy Summary"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| passed | ${PASS} |"
+            echo "| failed | ${FAIL} |"
+            echo "| warnings | ${WARN} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$FAIL" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Failure Diagnostic Dump
+        if: failure()
+        run: |
+          set -uo pipefail
+          echo "Stack task history"
+          docker stack ps madeena-iam --no-trunc --format 'table {{.Name}}\t{{.CurrentState}}\t{{.Error}}' 2>/dev/null | head -30 || true
+          for svc in madeena-iam_app madeena-iam_db madeena-iam_queue madeena-iam_nginx; do
+            echo "Logs: $svc"
+            docker service logs "$svc" --tail=80 --no-task-ids 2>/dev/null || true
+          done
+          df -h / /var/lib/docker 2>/dev/null || true
+          free -h 2>/dev/null || true
+          docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || true
