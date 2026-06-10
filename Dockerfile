@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.composer/cache,sharing=locked \
 FROM node:24-alpine AS node-builder
 
 WORKDIR /app
-COPY package.json package-lock.json vite.config.js tailwind.config.js postcss.config.js ./
+COPY package.json package-lock.json vite.config.js ./
 COPY resources/ ./resources/
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm ci --no-audit --no-fund --loglevel=error \
