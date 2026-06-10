@@ -424,5 +424,33 @@ Implement registration notification email for super admins, onboarding email for
 ### Results
 - ✅ **Success**: Implemented robust registration notifications and user onboarding flows, fully documented database and architectural schemas in the PRD, and verified with 100% test success across unit, feature, and E2E test suites.
 
+## [2026-06-11] Session 21: Add Global Sticky Footer & Dynamic Versioning
+
+### Objective
+Implement a global sticky footer across all UIs (landing page, login page, Filament admin panel, and outgoing email templates) featuring dynamic versioning directly read from a `VERSION` file, following the approved implementation plan.
+
+### Actions Performed
+1. **Dynamic Versioning Resolution**:
+   - Created `/var/www/madeena-iam/VERSION` containing `v1.0.0`.
+   - Updated `app/Providers/AppServiceProvider.php` to resolve version text from `VERSION` at boot, trimming any leading 'v/V', sharing `$appVersion` globally with all views, and setting the `app.version` config.
+2. **Sticky Footer Component**:
+   - Created `resources/views/components/footer.blade.php` with a sleek glassmorphism design (`backdrop-blur-md bg-white/70 border border-gray-200/50 rounded-full shadow-sm` with dark mode variants) and configured `pointer-events-none` on the outer wrapper.
+3. **Public UIs Integration**:
+   - Included `<x-footer />` before the closing `</body>` tag in `resources/views/welcome.blade.php`.
+   - Replaced the hardcoded static footer on the login page `resources/views/auth/login.blade.php` with the unified `<x-footer />` component.
+4. **Filament Hook Integration**:
+   - Registered the footer component to render globally on Filament admin pages using `FilamentView::registerRenderHook` with `PanelsRenderHook::PAGE_END`.
+5. **Email Templates Update**:
+   - Published default Laravel mail templates (`php artisan vendor:publish --tag=laravel-mail`).
+   - Modified the HTML email footer template (`resources/views/vendor/mail/html/message.blade.php`) and text email footer template (`resources/views/vendor/mail/text/message.blade.php`) to display consistent copyright year and resolved version.
+6. **Automated Testing Suite**:
+   - Created `tests/Unit/VersionTest.php` to verify version string resolution and formatting logic.
+   - Created `tests/Feature/FooterTest.php` to verify that the footer renders correctly on `/login` and within mailable previews.
+   - Created `tests/e2e/footer.spec.ts` to verify the footer renders successfully in Chromium under Playwright on both public and admin panel endpoints.
+   - Ran all unit, feature, and E2E tests: all tests passed successfully (100% green).
+
+### Results
+- ✅ **Success**: Cleanly added unified sticky footer across all UIs, admin panels, and emails with dynamic versioning. Verified with 100% test success across unit, feature, and E2E test suites.
+
 
 

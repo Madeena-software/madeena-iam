@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -75,5 +78,22 @@ class AppServiceProvider extends ServiceProvider
                 Log::info('E2E_MAIL_SENT: '.$event->message->toString());
             });
         }
+
+        // Resolve version from VERSION file, fallback to 1.0.0
+        $versionFile = base_path('VERSION');
+        $appVersion = '1.0.0';
+        if (file_exists($versionFile)) {
+            $appVersion = trim(file_get_contents($versionFile));
+            $appVersion = ltrim($appVersion, 'vV');
+        }
+
+        config(['app.version' => $appVersion]);
+        View::share('appVersion', $appVersion);
+
+        // Register Filament footer hook
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::PAGE_END,
+            fn (): \Illuminate\Contracts\View\View => view('components.footer')
+        );
     }
 }

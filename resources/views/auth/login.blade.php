@@ -482,10 +482,6 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer-bar">
-        &copy; {{ date('Y') }} Madeena. All rights reserved.
-    </footer>
-
+    <x-footer />
 </body>
 </html>
