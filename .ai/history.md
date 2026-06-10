@@ -377,4 +377,26 @@ Configure, validate, and successfully deploy the `madeena-iam` stack to the prod
 ### Results
 - ✅ **Success**: Network subnet collision and compose syntax issues resolved, diagnostics & cleanup executed successfully, and a clean Swarm deployment pipeline is currently active.
 
+## [2026-06-10] Session 19: Swarm Deployment Diagnosis & Rollback Failure Analysis
+
+### Objective
+Diagnose the production Swarm deployment pipeline failures (runs #7, #8, #9) and update session history/state documentation.
+
+### Actions Performed
+1. **Repository & Pipeline Realignment**:
+   - Pushed the local commits (containing the overlay network subnet conflict resolution `10.0.12.0/24`) to the remote `main` branch.
+   - Cancelled the active deployment run #7.
+2. **Diagnostics and Cleanup execution**:
+   - Encountered a hang during deployment run #8. Executed the `diagnostics.yml` workflow, which successfully stopped the stuck `madeena-iam` services and released the overlay network.
+3. **Deployment Run #9 and Rollback Loop Diagnosis**:
+   - Triggered clean deployment run #9 (ID `27254346634`).
+   - Analyzed GHA job logs and identified that the `madeena-iam_app` service update failed, triggering an automatic rollback.
+   - Discovered that the rollback process hung indefinitely at `overall progress: rolling back update: 0 out of 1 tasks`, requiring manual cancellation.
+4. **Documentation & Memory Update**:
+   - Logged the rollback loop as a Known Issue in `.ai/memory/state.md`.
+   - Outlined next steps to retrieve exact task errors via `docker stack ps` and `docker service logs` inside the production environment.
+
+### Results
+- ❌ **Blocked**: Deployment run #9 failed and was cancelled because of an app container update failure and a subsequent infinite rollback loop. The documentation in the `.ai/` folder has been successfully updated with these diagnostics and findings.
+
 

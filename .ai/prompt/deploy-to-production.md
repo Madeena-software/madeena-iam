@@ -38,7 +38,7 @@ Before taking any action:
 
 ## PHASE 2: Deployment Loop 🔧
 
-Execute the following loop. **Maximum 10 iterations.** Track the current iteration number.
+Execute the following loop. **Maximum 1 iterations.** Track the current iteration number.
 
 ### Step 1: Check Current State
 
@@ -134,7 +134,7 @@ The deployment is considered **successful** when the `deploy-swarm.yml` workflow
 
 ## PHASE 3: Save Game 💾
 
-Once deployment succeeds (or after exhausting 10 retry cycles):
+Once deployment succeeds (or after exhausting retry cycles):
 
 ### On Success:
 1. **Update `.ai/memory/state.md`**:
@@ -158,10 +158,10 @@ Once deployment succeeds (or after exhausting 10 retry cycles):
    - Total retry cycles: [N]
    ```
 
-### On Failure (10 retries exhausted):
+### On Failure:
 1. **Update `.ai/memory/state.md`**:
    - Keep Active Goal as deployment.
-   - Add to Known Issues: _"Deployment blocked after 10 attempts. Last error: [description]"_
+   - Add to Known Issues: _"Deployment blocked after attempts. Last error: [description]"_
    - Set Next Steps with specific guidance for the next session.
 
 2. **Append to `.ai/history.md`** with `⚠️ Partial` or `❌ Blocked` result status and detailed failure analysis.
@@ -181,4 +181,4 @@ Once deployment succeeds (or after exhausting 10 retry cycles):
 
 ## EXECUTION COMMAND
 
-Start now. Load the game state, check the current deployment status, and begin the deployment loop. Do not stop until all 8 post-deploy verification checks pass or you've exhausted 10 retry cycles.
+Start now. Load the game state, check the current deployment status, and begin the deployment loop. Do not stop until all 8 post-deploy verification checks pass or you've exhausted retry cycles.

@@ -57,6 +57,7 @@
 - **Milestone 57**: Resolved overlay network subnet conflict by changing `madeena-iam_network` subnet to `10.0.12.0/24`.
 - **Milestone 58**: Created and ran a diagnostics & cleanup Swarm workflow, purging stuck services and releasing the conflicting network.
 - **Milestone 59**: Triggered clean production deployment pipeline run #7.
+- **Milestone 60**: Pushed overlay network subnet adjustment (`10.0.12.0/24`) to `origin/main`, ran diagnostics cleanup workflow to release stuck resources, and triggered deployment run #9.
 
 ---
 
@@ -71,12 +72,12 @@
 
 ## 5. Known Issues
 
-- None. (Codebase verified and healthy).
+- **SSO Swarm Rollback Loop**: The `madeena-iam_app` service update fails on the production Swarm, triggering a rollback. This rollback loops/hangs indefinitely at `overall progress: rolling back update: 0 out of 1 tasks`, preventing the GHA run from completing naturally (encountered in GHA runs #7, #8, #9).
 
 ---
 
 ## 6. Next Steps
  
-- Verify deployment health check status of GHA run #7.
-- Trigger and verify the database permission setup and backup workflow (`server-setup-db.yml`).
+- Inspect the production container execution logs (`docker service logs madeena-iam_app` and `docker stack ps madeena-iam`) to identify the root cause of the container startup/health check failure.
+- Diagnose and resolve the `.github/workflows/server-setup-db.yml` workflow YAML parsing syntax error.
 - Resume the standalone session management implementation task ([.ai/prompt/sessions/implement-session-resource.md](file:///var/www/madeena-iam/.ai/prompt/sessions/implement-session-resource.md)).
