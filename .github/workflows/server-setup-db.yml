@@ -226,7 +226,7 @@ jobs:
               --retention-days="${RETENTION_DAYS}" \
               --prefix="${APP_SLUG}-" \
               --no-interaction
-BACKUP_EOF
+          BACKUP_EOF
 
           _sudo cp "$TMP_SCRIPT" "$BACKUP_SCRIPT"
           _sudo chmod 700 "$BACKUP_SCRIPT"

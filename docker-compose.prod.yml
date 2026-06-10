@@ -120,7 +120,15 @@ services:
           memory: 512M
         reservations:
           memory: 128M
-    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90", "--max-jobs=500", "--memory=128"]
+    command:
+      - sh
+      - -lc
+      - |
+        until php artisan migrate:status >/dev/null 2>&1; do
+          echo "[queue] waiting for migrations to be ready..."
+          sleep 5
+        done
+        exec php artisan queue:work --sleep=3 --tries=3 --timeout=90 --max-jobs=500 --memory=128
     stop_grace_period: 120s
     volumes:
       - ${APP_STORAGE_HOST_PATH}/app:/var/www/html/storage/app

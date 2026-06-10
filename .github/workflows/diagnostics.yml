@@ -13,6 +13,11 @@ jobs:
           set -x
           docker info --format 'Swarm State: {{.Swarm.LocalNodeState}} | Manager: {{.Swarm.ControlAvailable}}'
           docker stack ls || true
+          docker stack ps madeena-iam --no-trunc || true
+          docker service logs madeena-iam_app --tail=100 || true
+          docker service logs madeena-iam_queue --tail=100 || true
+          docker service logs madeena-iam_db --tail=100 || true
+          docker service logs madeena-iam_nginx --tail=100 || true
 
       - name: Swarm Clean
         run: |
