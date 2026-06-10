@@ -48,7 +48,7 @@ services:
       start_period: 60s
 
   app:
-    image: "{{APP_NAME}}":latest
+    image: "{{APP_NAME}}:latest"
     deploy:
       replicas: 1
       placement:
@@ -97,7 +97,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   queue:
-    image: "{{APP_NAME}}":latest
+    image: "{{APP_NAME}}:latest"
     deploy:
       replicas: 1
       placement:
