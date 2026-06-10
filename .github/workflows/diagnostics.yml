@@ -1,0 +1,51 @@
+name: Swarm Diagnostics
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    name: Run Swarm Diagnostics
+    runs-on: self-hosted
+    steps:
+      - name: Swarm Status
+        run: |
+          set -x
+          docker info --format 'Swarm State: {{.Swarm.LocalNodeState}} | Manager: {{.Swarm.ControlAvailable}}'
+          docker node ls || true
+          docker stack ls || true
+
+      - name: Stack Tasks (madeena-iam)
+        run: |
+          set -x
+          docker stack ps madeena-iam --no-trunc || true
+
+      - name: Service List
+        run: |
+          set -x
+          docker service ls || true
+
+      - name: Container List
+        run: |
+          set -x
+          docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' || true
+
+      - name: Database Logs
+        run: |
+          set -x
+          docker service logs madeena-iam_db --tail=100 || true
+
+      - name: App Logs
+        run: |
+          set -x
+          docker service logs madeena-iam_app --tail=100 || true
+
+      - name: Queue Logs
+        run: |
+          set -x
+          docker service logs madeena-iam_queue --tail=100 || true
+
+      - name: Nginx Logs
+        run: |
+          set -x
+          docker service logs madeena-iam_nginx --tail=100 || true
