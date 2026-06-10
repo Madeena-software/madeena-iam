@@ -3,10 +3,6 @@ name: Deploy to Production (Swarm)
 # ═══════════════════════════════════════════════════════════════════════════════
 # Madeena Standard CI/CD Template — Docker Swarm Deployment (AWS S3 Edition)
 #
-# CUSTOMIZATION REQUIRED:
-#   1. Replace {{APP_NAME}} with your app slug (lowercase, e.g., "pbu50")
-#   2. Replace {{APP_NAME_PROPER}} with your app display name (e.g., "My App")
-#
 # REQUIRED GITHUB SECRETS:
 #   APP_KEY, APP_DOMAIN, SSH_USER, REMOTE_PATH
 #   DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_ROOT_PASSWORD
@@ -31,7 +27,7 @@ jobs:
   build:
     name: Build Docker Image (Local)
     runs-on: self-hosted
-    timeout-minutes: 25
+    timeout-minutes: 60
     outputs:
       app_version: ${{ steps.version.outputs.app_version }}
 
@@ -53,10 +49,10 @@ jobs:
           echo "===> Building \"{{APP_NAME}}\":latest on local runner..."
           docker build \
             --build-arg APP_VERSION="${{ steps.version.outputs.app_version }}" \
-            --tag \"{{APP_NAME}}\":latest \
+            --tag "{{APP_NAME}}":latest \
             --file ./Dockerfile \
             .
-          docker image inspect \"{{APP_NAME}}\":latest --format 'ID: {{.Id}} | Size: {{.Size}} bytes'
+          docker image inspect "{{APP_NAME}}":latest --format 'ID: {{.Id}} | Size: {{.Size}} bytes'
 
   deploy:
     name: Deploy to Production
@@ -160,7 +156,7 @@ jobs:
           cd "$REMOTE_PATH"
           cp "$GITHUB_WORKSPACE/docker-compose.prod.yml" docker-compose.prod.yml
           mkdir -p nginx/conf.d
-          cp "$GITHUB_WORKSPACE/nginx/conf.d/app.conf" nginx/conf.d/app.conf
+          cp "$GITHUB_WORKSPACE/docker/nginx.conf" nginx/conf.d/app.conf
           echo "$LIVE_VERSION" > VERSION-CURRENT
 
           echo "===> Writing environment file..."
@@ -183,6 +179,8 @@ jobs:
             'AWS_USE_PATH_STYLE_ENDPOINT=true' \
             'AWS_DEFAULT_REGION=id' \
             'AWS_STORAGE_THROW=true' \
+            'PUBLIC_DISK_DRIVER=s3' \
+            'BACKUPS_DISK_DRIVER=s3' \
             'QUEUE_CONNECTION=database' \
             'CACHE_STORE=database' \
             'SESSION_DRIVER=database' \
@@ -231,7 +229,7 @@ jobs:
           fi
 
           echo "===> Verifying local image \"{{APP_NAME}}\":latest..."
-          docker image inspect \"{{APP_NAME}}\":latest >/dev/null 2>&1 || {
+          docker image inspect "{{APP_NAME}}":latest >/dev/null 2>&1 || {
             echo "FATAL: \"{{APP_NAME}}\":latest is not available locally."
             exit 1
           }
@@ -250,7 +248,7 @@ jobs:
           docker run --rm \
             --entrypoint php \
             --env-file .env \
-            \"{{APP_NAME}}\":latest \
+            "{{APP_NAME}}":latest \
             artisan storage:check --disk=public --disk=enterprise_backups -v
 
           echo "===> Deploying stack..."
@@ -260,8 +258,8 @@ jobs:
 
           echo "===> Force updating app and queue services with new image..."
           sleep 5
-          docker service update --force --image \"{{APP_NAME}}\":latest {{APP_NAME}}_app || true
-          docker service update --force --image \"{{APP_NAME}}\":latest {{APP_NAME}}_queue || true
+          docker service update --force --image "{{APP_NAME}}":latest {{APP_NAME}}_app || true
+          docker service update --force --image "{{APP_NAME}}":latest {{APP_NAME}}_queue || true
 
           echo "===> [1/3] Waiting for database to be healthy..."
           _WAIT_DB=0
@@ -364,7 +362,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 10); do
-            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 30 "http://${{ secrets.SSH_HOST }}:8011" || echo "000")
+            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 30 "http://127.0.0.1:8012/up" || echo "000")
             echo "Attempt $attempt/10 — HTTP $HTTP_STATUS"
             echo "$HTTP_STATUS" | grep -qE '^(200|301|302|307|308)$' && { echo "✅ Healthy"; exit 0; }
             sleep 10
@@ -496,7 +494,7 @@ jobs:
           media_probe="deploy-check-$(date -u +%Y%m%d%H%M%S).txt"
           media_payload="madeena-cp-media-${media_probe}"
           docker exec -e MEDIA_PROBE="$media_probe" -e MEDIA_PAYLOAD="$media_payload" "$app_container" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); Illuminate\Support\Facades\Storage::disk("public")->put(getenv("MEDIA_PROBE"), getenv("MEDIA_PAYLOAD"));'
-          fetched="$(curl -fsS --max-time 10 "http://127.0.0.1:8011/storage/${media_probe}" || true)"
+          fetched="$(curl -fsS --max-time 10 "http://127.0.0.1:8012/storage/${media_probe}" || true)"
           docker exec -e MEDIA_PROBE="$media_probe" "$app_container" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); Illuminate\Support\Facades\Storage::disk("public")->delete(getenv("MEDIA_PROBE"));' || true
           if [ "$fetched" = "$media_payload" ]; then
             _pass "/storage route streams public disk media"

@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  APP_SLUG: \"{{APP_NAME}}\"
+  APP_SLUG: "{{APP_NAME}}"
   BACKUP_SCRIPT: /opt/madeena-cp-db-backup.sh
   BACKUP_ENV_FILE: /etc/madeena-cp-db-backup.env
   DB_DATABASE: ${{ secrets.DB_DATABASE }}
@@ -62,7 +62,7 @@ jobs:
             exit 1
           fi
 
-          docker image inspect \"{{APP_NAME}}\":latest >/dev/null 2>&1 || {
+          docker image inspect "{{APP_NAME}}":latest >/dev/null 2>&1 || {
             echo "FATAL: \"{{APP_NAME}}\":latest is required for S3 backup uploads."
             exit 1
           }
@@ -209,23 +209,18 @@ jobs:
           echo "[$(date -u)] Local backup verified: ${BACKUP_NAME} (${TABLE_COUNT} tables)."
           docker run --rm \
             --network host \
-            --entrypoint php \
-            -e APP_ENV \
-            -e APP_DEBUG \
-            -e APP_KEY \
+            --entrypoint sh \
             -e AWS_ACCESS_KEY_ID \
             -e AWS_SECRET_ACCESS_KEY \
             -e AWS_DEFAULT_REGION \
             -e AWS_BUCKET \
             -e AWS_ENDPOINT \
-            -e AWS_USE_PATH_STYLE_ENDPOINT \
             -v "${TMPDIR}:/backup:ro" \
-            \"{{APP_NAME}}\":latest \
-            artisan backup:upload "/backup/${BACKUP_NAME}" \
-              --remote-name="${BACKUP_NAME}" \
-              --retention-days="${RETENTION_DAYS}" \
-              --prefix="${APP_SLUG}-" \
-              --no-interaction
+            minio/mc:latest -c " \
+              mc alias set s3 \"\$AWS_ENDPOINT\" \"\$AWS_ACCESS_KEY_ID\" \"\$AWS_SECRET_ACCESS_KEY\" --api S3v4 >/dev/null && \
+              mc cp \"/backup/${BACKUP_NAME}\" \"s3/\$AWS_BUCKET/${APP_SLUG}-backups/${BACKUP_NAME}\" && \
+              mc rm --recursive --force --older-than \"${RETENTION_DAYS}d\" \"s3/\$AWS_BUCKET/${APP_SLUG}-backups/\" \
+            "
           BACKUP_EOF
 
           _sudo cp "$TMP_SCRIPT" "$BACKUP_SCRIPT"
@@ -285,7 +280,7 @@ jobs:
             --network host \
             --entrypoint php \
             --env-file "$BACKUP_ENV_FILE" \
-            \"{{APP_NAME}}\":latest \
+            "{{APP_NAME}}":latest \
             artisan storage:check --disk=enterprise_backups --no-interaction
 
           CRON="$(_sudo crontab -l 2>/dev/null | grep 'madeena-cp-db-backup' || true)"

@@ -1,0 +1,93 @@
+name: "Download Database Backup"
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What do you want to do?"
+        required: true
+        type: choice
+        options:
+          - "Download Latest"
+          - "Download Specific"
+          - "List Available Backups"
+        default: "Download Latest"
+      backup_name:
+        description: "Filename (Only required if using 'Download Specific')"
+        required: false
+        type: string
+
+concurrency:
+  group: "{{APP_NAME}}-download-backup"
+  cancel-in-progress: false
+
+jobs:
+  download-backup:
+    name: Retrieve Backup
+    runs-on: self-hosted
+    
+    steps:
+      - name: Process Backups
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
+          AWS_BUCKET: ${{ secrets.MINIO_BUCKET }}
+          AWS_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          APP_SLUG: "{{APP_NAME}}"
+        run: |
+          set -euo pipefail
+          
+          # Ensure workspace is clean before starting
+          rm -f *.sql.gz
+          
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            --entrypoint sh \
+            -e AWS_ACCESS_KEY_ID \
+            -e AWS_SECRET_ACCESS_KEY \
+            -e AWS_BUCKET \
+            -e AWS_ENDPOINT \
+            -e APP_SLUG \
+            -e ACTION="${{ github.event.inputs.action }}" \
+            -e BACKUP_INPUT="${{ github.event.inputs.backup_name }}" \
+            minio/mc:latest -c "
+              mc alias set s3 \"\$AWS_ENDPOINT\" \"\$AWS_ACCESS_KEY_ID\" \"\$AWS_SECRET_ACCESS_KEY\" --api S3v4 >/dev/null
+              
+              if [ \"\$ACTION\" = \"List Available Backups\" ]; then
+                echo \"=== Available backups in S3 ===\"
+                mc ls \"s3/\$AWS_BUCKET/\${APP_SLUG}-backups/\" | grep '\.sql\.gz$' || echo \"No backups found yet.\"
+                echo \"===============================\"
+                exit 0
+              fi
+              
+              if [ \"\$ACTION\" = \"Download Specific\" ]; then
+                if [ -z \"\$BACKUP_INPUT\" ]; then
+                  echo \"ERROR: You selected 'Download Specific' but did not provide a filename.\"
+                  exit 1
+                fi
+                TARGET_FILE=\"\$BACKUP_INPUT\"
+              else
+                echo \"Finding the latest backup...\"
+                TARGET_FILE=\$(mc ls \"s3/\$AWS_BUCKET/\${APP_SLUG}-backups/\" | grep '\.sql\.gz$' | tail -n 1 | awk '{print \$NF}')
+              fi
+              
+              if [ -z \"\$TARGET_FILE\" ]; then
+                echo \"No backups found!\"
+                exit 1
+              fi
+              
+              echo \"Downloading \$TARGET_FILE...\"
+              mc cp \"s3/\$AWS_BUCKET/\${APP_SLUG}-backups/\$TARGET_FILE\" \"/workspace/\$TARGET_FILE\"
+            "
+
+      - name: Upload Backup as Artifact
+        if: github.event.inputs.action != 'List Available Backups'
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: "*.sql.gz"
+          retention-days: 1
+          
+      - name: Cleanup Host
+        if: always()
+        run: rm -f *.sql.gz
