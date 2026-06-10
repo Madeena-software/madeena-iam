@@ -100,6 +100,7 @@ sequenceDiagram
         App-->>User: Displays error ("Email already registered")
     else Email available
         IAM->>DB: Creates user record with status = "pending_approval"
+        IAM->>Admin: Sends "New User Registration" email notification to all Super Admins
         IAM-->>App: Returns 201 Created (status: pending_approval)
         App-->>User: Displays success page: "Awaiting admin approval"
     end
@@ -108,7 +109,7 @@ sequenceDiagram
     Admin->>IAM: Logs into Filament Admin Panel on sso.mhcsgo.cloud
     Admin->>IAM: Reviews pending user details & clicks "Approve"
     Admin->>DB: Updates user status to "approved" & assigns allowed client applications
-    IAM->>User: Sends "Account Approved" email notification
+    IAM->>User: Sends "Account Approved" email notification (Onboarding Reset Password Link)
 ```
 
 ---
@@ -237,6 +238,7 @@ sequenceDiagram
 * **Access Mapping:** Admins can assign users to specific applications or revoke their permission.
 * **Access Guard:** When authentication is requested for a specific Client ID, the system must verify that the user is explicitly allowed to access that application.
 * **Global Account Approvals:** Review new registrations, toggle user statuses (`pending_approval`, `approved`, `suspended`), and activate accounts.
+* **Admin Notifications:** Automatically queue and send an email notification to all users with the `super_admin` role when a new user registers through the API registration endpoint. The email contains a direct link to the user's edit page in Filament.
 
 ### 5.3. Security, Sessions & Audit Logs
 * **Device Session Tracking:** List all devices/browsers currently logged into the user's account.

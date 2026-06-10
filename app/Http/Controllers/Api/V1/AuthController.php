@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\NewUserRegistrationAdminMail;
 use App\Models\AuthenticationLog;
 use App\Models\OauthClient;
 use App\Models\User;
@@ -16,6 +17,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -175,6 +178,12 @@ class AuthController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        $roleExists = Role::where('name', 'super_admin')->exists();
+        $admins = $roleExists ? User::role('super_admin')->get() : collect();
+        if ($admins->isNotEmpty()) {
+            Mail::to($admins)->queue(new NewUserRegistrationAdminMail($user, $client));
+        }
 
         return response()->json([
             'message' => 'User registered successfully. Awaiting approval.',

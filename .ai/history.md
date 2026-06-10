@@ -399,4 +399,30 @@ Diagnose the production Swarm deployment pipeline failures (runs #7, #8, #9) and
 ### Results
 - ❌ **Blocked**: Deployment run #9 failed and was cancelled because of an app container update failure and a subsequent infinite rollback loop. The documentation in the `.ai/` folder has been successfully updated with these diagnostics and findings.
 
+## [2026-06-10] Session 20: Admin Notification and Onboarding Email Lifecycle
+
+### Objective
+Implement registration notification email for super admins, onboarding email for newly approved users, and complete Unit, Feature, and E2E Playwright test coverage (100% passing).
+
+### Actions Performed
+1. **SMTP Configuration**:
+   - Configured Gmail SMTP settings in `.env` and `.env.local` to use the provided Gmail credentials.
+2. **Mail Interception & Logging**:
+   - Added an event listener for `MessageSending` in `AppServiceProvider.php` (limited to local and testing environments) to log a raw copy of outgoing emails to `laravel.log`.
+3. **Mailable & View Creation**:
+   - Created `NewUserRegistrationAdminMail` class and `resources/views/emails/admin/new_user_registration.blade.php` view template containing registration details and CTA link to Filament user edit page.
+4. **Registration Hook**:
+   - Modified `AuthController::register` to fetch `super_admin` users (safely checking role database existence first) and queue the admin notification mail.
+5. **Pyramid Testing Suite**:
+   - Unit Test: Created `NewUserRegistrationAdminMailTest` (verified envelope and render HTML elements).
+   - Feature Test: Created `NewUserRegistrationAdminNotificationTest` (verified API dispatch status and queued mail assertions).
+   - E2E Test: Created `user-registration-approval.spec.ts` (Playwright test verifying api registration, admin email extraction, admin approval panel modal interaction, onboarding email log parsing, and set password screen load).
+6. **Execution & Validation**:
+   - Started local web server and queue listener in the background, resolving quoted-printable soft line breaks (`=\r\n` and `=3D` query parameters) during email log parsing.
+   - Verified that all 7 Playwright tests pass successfully (1.1 minutes).
+
+### Results
+- ✅ **Success**: Implemented robust registration notifications and user onboarding flows, fully documented database and architectural schemas in the PRD, and verified with 100% test success across unit, feature, and E2E test suites.
+
+
 

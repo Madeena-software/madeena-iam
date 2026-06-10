@@ -15,7 +15,7 @@ To maintain absolute security, security audits, and architectural independence, 
 - **SSO Silent Session Sync (`prompt=none`)**: Supports standard `prompt=none` redirect logic so client apps can silently verify if a user has an active session cookie on `sso.mhcsgo.cloud` and sign them in.
 - **Alternative Direct API Login (Secondary)**:
   - `POST /api/v1/auth/login`: Direct server-to-server credentials verification (validates credentials, client permissions, status = `approved`) returning a Personal Access Token.
-  - `POST /api/v1/auth/register`: Adds user in `pending_approval` status, requiring admin validation.
+  - `POST /api/v1/auth/register`: Adds user in `pending_approval` status, requiring admin validation, and queues a "New User Registration" email notification to all super_admin users.
 - **Granular Access Control**: Direct assignment or revocation of application access for users from a central control panel.
 - **Admin Configuration**: App registry configuration and permission mappings (via Filament Admin Panel on `sso.mhcsgo.cloud`).
 - **Audit Trails**: Logs all logins, logouts, IPs, user agents, accessed clients, and status (`success`, `failed_password`, `blocked_app`).

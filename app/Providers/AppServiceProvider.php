@@ -13,9 +13,11 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -67,5 +69,11 @@ class AppServiceProvider extends ServiceProvider
         //     Failed::class,
         //     LogFailedLogin::class
         // );
+
+        if (app()->environment('local', 'testing')) {
+            Event::listen(MessageSending::class, function (MessageSending $event) {
+                Log::info('E2E_MAIL_SENT: '.$event->message->toString());
+            });
+        }
     }
 }
