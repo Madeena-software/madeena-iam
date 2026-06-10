@@ -82,26 +82,30 @@ jobs:
             exit 1
           fi
           
-          echo "Downloading $TARGET_FILE..."
-          docker run --rm \
-            -v "$PWD:/workspace" \
+          echo "Generating presigned URL for $TARGET_FILE..."
+          
+          # mc share output format is usually: URL: https://...
+          PRESIGNED_URL=$(docker run --rm \
             --entrypoint sh \
             -e AWS_ACCESS_KEY_ID \
             -e AWS_SECRET_ACCESS_KEY \
             -e AWS_ENDPOINT \
             minio/mc:latest -c "
               mc alias set s3 \"\$AWS_ENDPOINT\" \"\$AWS_ACCESS_KEY_ID\" \"\$AWS_SECRET_ACCESS_KEY\" --api S3v4 >/dev/null && \
-              mc cp \"s3/$AWS_BUCKET/${APP_SLUG}-backups/$TARGET_FILE\" \"/workspace/$TARGET_FILE\"
-            "
+              mc share download --expire 1h \"s3/$AWS_BUCKET/${APP_SLUG}-backups/$TARGET_FILE\"
+            " | grep '^URL:' | awk '{print $2}')
+            
+          if [ -z "$PRESIGNED_URL" ]; then
+             echo "Failed to generate presigned URL!"
+             exit 1
+          fi
 
-      - name: Upload Backup as Artifact
-        if: github.event.inputs.action != 'List Available Backups'
-        uses: actions/upload-artifact@v4
-        with:
-          name: database-backup
-          path: "*.sql.gz"
-          retention-days: 1
+          echo "✅ Backup is ready for download!"
+          echo "Download URL (Valid for 1 hour): $PRESIGNED_URL"
           
-      - name: Cleanup Host
-        if: always()
-        run: rm -f *.sql.gz
+          echo "### 📦 Database Backup Ready" >> $GITHUB_STEP_SUMMARY
+          echo "The database backup **$TARGET_FILE** is ready for download." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[Download Backup (.sql.gz)]($PRESIGNED_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "*Link expires in 1 hour. Do not share this link with unauthorized users.*" >> $GITHUB_STEP_SUMMARY
