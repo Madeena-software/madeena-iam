@@ -358,3 +358,23 @@ Update the System Architecture & Flow documentation in the PRD and guidelines to
 ### Results
 - ✅ **Success**: Documentation updated to promote redirect-based SSO as primary, preserving direct API authentication as secondary, and validated that no codebase regressions occurred.
 
+## [2026-06-10] Session 18: Swarm Production Deployment
+
+### Objective
+Configure, validate, and successfully deploy the `madeena-iam` stack to the production Swarm environment at port `8012`.
+
+### Actions Performed
+1. **YAML Syntax Fix**:
+   - Corrected invalid quote parsing for the `image` tags in [docker-compose.prod.yml](file:///var/www/madeena-iam/docker-compose.prod.yml) and [standard-docker-compose.prod.yml](file:///var/www/madeena-iam/templates/prod/standard-docker-compose.prod.yml) (changed `"madeena-iam":latest` to `"madeena-iam:latest"`). This fixed the `yaml: line 50: did not find expected key` error.
+2. **Overlay Network Subnet Conflict Resolution**:
+   - Diagnosed that the `madeena-iam` overlay network subnet was conflicting with the sibling `madeena-company-profile` stack (`madeena_cp_network`), as both were trying to claim `10.0.11.0/24`.
+   - Updated `madeena-iam`'s network subnet to `10.0.12.0/24` to avoid the collision.
+3. **Swarm Stack Cleanup**:
+   - Created a diagnostic/cleanup workflow [.github/workflows/diagnostics.yml](file:///var/www/madeena-iam/.github/workflows/diagnostics.yml) and executed it to completely remove the old stuck `madeena-iam` services and release the conflicting network.
+4. **Triggered Clean Deploy**:
+   - Committed the configurations, pushed to GitHub, and triggered a fresh production deployment run `#7` (ID `27252149354`) which successfully built the image and is currently deploying/settling the services.
+
+### Results
+- ✅ **Success**: Network subnet collision and compose syntax issues resolved, diagnostics & cleanup executed successfully, and a clean Swarm deployment pipeline is currently active.
+
+

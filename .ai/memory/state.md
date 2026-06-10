@@ -18,8 +18,8 @@
 
 ## 2. Active Goal
  
-- **Goal**: `Session management implementation`
-- **Objective**: `Execute the session management implementation plan to build the standalone Sessions resource and User relation manager.`
+- **Goal**: `Swarm Production Deployment`
+- **Objective**: `Configure, validate, and successfully deploy the madeena-iam stack to the production Swarm environment at port 8012.`
 
 ---
 
@@ -53,6 +53,10 @@
 - **Milestone 26**: Resolved and displayed creator, updater, and deleter names in the User resource index and detail/edit views. Added self-referential model relationships, refactored Livewire table columns with prefix-qualified columns to prevent SQL self-join query ambiguity, and verified with Unit, Feature, and Playwright E2E test suites (100% green).
 - **Milestone 54**: Diagnosed E2E test residue leakage (restored test users left active). Updated `tests/e2e/users.spec.ts` to perform a full delete and force-delete cleanup at the end of the test. Verified with 100% passing E2E tests.
 - **Milestone 55**: Transitioned the primary login flow design in `docs/madeena_iam_prd.md` and `.ai/rules/project-context.md` to represent standard redirect-based OAuth2 SSO, while keeping direct API login as a secondary option.
+- **Milestone 56**: Fixed Docker Compose image syntax quoting error in production and standard templates.
+- **Milestone 57**: Resolved overlay network subnet conflict by changing `madeena-iam_network` subnet to `10.0.12.0/24`.
+- **Milestone 58**: Created and ran a diagnostics & cleanup Swarm workflow, purging stuck services and releasing the conflicting network.
+- **Milestone 59**: Triggered clean production deployment pipeline run #7.
 
 ---
 
@@ -73,6 +77,6 @@
 
 ## 6. Next Steps
  
-- Execute the session management implementation plan ([.ai/prompt/sessions/implement-session-resource.md](file:///var/www/madeena-iam/.ai/prompt/sessions/implement-session-resource.md)) to build the standalone Sessions resource and User relation manager.
-- Perform manual Quality Control on the User-Client attachment activity logging.
-- Monitor production log sizes and clean up archived database logs periodically.
+- Verify deployment health check status of GHA run #7.
+- Trigger and verify the database permission setup and backup workflow (`server-setup-db.yml`).
+- Resume the standalone session management implementation task ([.ai/prompt/sessions/implement-session-resource.md](file:///var/www/madeena-iam/.ai/prompt/sessions/implement-session-resource.md)).
