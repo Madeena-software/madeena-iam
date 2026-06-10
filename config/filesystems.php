@@ -40,7 +40,7 @@ return [
 
         'public' => [
             'driver' => env('PUBLIC_DISK_DRIVER', 'local'),
-            'root' => storage_path('app/public'),
+            'root' => env('PUBLIC_DISK_DRIVER', 'local') === 's3' ? '' : storage_path('app/public'),
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
