@@ -19,7 +19,7 @@
 ## 2. Active Goal
  
 - **Goal**: `Swarm Production Deployment`
-- **Objective**: `Configure, validate, and successfully deploy the madeena-iam stack to the production Swarm environment at port 8012.`
+- **Objective**: `Configure, validate, and successfully deploy the madeena-iam stack to the production Swarm environment at port 8012.` (Completed)
 
 ---
 
@@ -58,6 +58,9 @@
 - **Milestone 58**: Created and ran a diagnostics & cleanup Swarm workflow, purging stuck services and releasing the conflicting network.
 - **Milestone 59**: Triggered clean production deployment pipeline run #7.
 - **Milestone 60**: Pushed overlay network subnet adjustment (`10.0.12.0/24`) to `origin/main`, ran diagnostics cleanup workflow to release stuck resources, and triggered deployment run #9.
+- **Milestone 61**: Resolved `403 Forbidden` health check failures by updating Laravel's `TrustProxies` to trust all proxies in production environment (`*`) to prevent mixed content blocking and proxy header rejection.
+- **Milestone 62**: Resolved `404 Not Found` post-deploy verification failure by correcting the S3 root prefix resolution for the `public` disk in `filesystems.php` when using the `s3` driver.
+- **Milestone 63**: Successfully executed production Swarm deployment, passing all verification steps including DB, App, Queue worker health, and S3 media streaming (Workflow run `27256587692`).
 
 ---
 
@@ -66,18 +69,22 @@
 - **Database Health**: MySQL 8.4 running locally on port 3310 (configured via `docker-compose.local.yml`).
 - **Application Setup**: Done via `deploy-local.sh`.
 - **Local Dev Server**: Executed via `composer dev`.
-- **Test Suite Status**: 100% Pass (68 PHPUnit tests + 6 Playwright E2E test cases passing).
+- **Resolve `.github/workflows/server-setup-db.yml` failures:** Repaired the database backup script to use a containerized `minio/mc` client instead of relying on the missing `spatie/laravel-backup` package. (Completed)
+- **Implement a Download Backup Workflow:** Added a new `.github/workflows/download-backup.yml` to securely fetch database dumps as GitHub artifacts. (Completed)
+- **Synchronize Production Templates:** Synchronized all recent Swarm and Actions fixes back into the core source templates located in `templates/prod/` and updated the `validate-boilerplate.sh` checker. (Completed)
+
+---
+
+- **Session Management Implementation:** Verified that the standalone `SessionResource`, user `SessionsRelationManager`, custom model accessors, and all associated E2E/PHPUnit tests were already successfully implemented and merged by the previous developer. (Completed)
 
 ---
 
 ## 5. Known Issues
 
-- **SSO Swarm Rollback Loop**: The `madeena-iam_app` service update fails on the production Swarm, triggering a rollback. This rollback loops/hangs indefinitely at `overall progress: rolling back update: 0 out of 1 tasks`, preventing the GHA run from completing naturally (encountered in GHA runs #7, #8, #9).
+- None.
 
 ---
 
 ## 6. Next Steps
  
-- Inspect the production container execution logs (`docker service logs madeena-iam_app` and `docker stack ps madeena-iam`) to identify the root cause of the container startup/health check failure.
-- Diagnose and resolve the `.github/workflows/server-setup-db.yml` workflow YAML parsing syntax error.
-- Resume the standalone session management implementation task ([.ai/prompt/sessions/implement-session-resource.md](file:///var/www/madeena-iam/.ai/prompt/sessions/implement-session-resource.md)).
+1. Awaiting the next goal or PRD feature specification from the user.
