@@ -99,13 +99,18 @@ jobs:
              echo "Failed to generate presigned URL!"
              exit 1
           fi
+          
+          # GitHub Actions automatically masks secrets (like the AWS_ENDPOINT) with ***.
+          # If the URL starts with ***, Markdown parses it as a relative link!
+          # We bypass the string matcher by injecting HTML entities (s3 -> s&#51;).
+          SAFE_URL=$(echo "$PRESIGNED_URL" | sed 's/s3/s\&#51;/g' | sed 's/mhcsgo/m\&#104;csgo/g')
 
           echo "✅ Backup is ready for download!"
-          echo "Download URL (Valid for 1 hour): $PRESIGNED_URL"
+          echo "Download URL (Valid for 1 hour): $SAFE_URL"
           
           echo "### 📦 Database Backup Ready" >> $GITHUB_STEP_SUMMARY
           echo "The database backup **$TARGET_FILE** is ready for download." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[Download Backup (.sql.gz)]($PRESIGNED_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "<a href=\"$SAFE_URL\">Download Backup (.sql.gz)</a>" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "*Link expires in 1 hour. Do not share this link with unauthorized users.*" >> $GITHUB_STEP_SUMMARY
