@@ -25,6 +25,8 @@ jobs:
   download-backup:
     name: Retrieve Backup
     runs-on: self-hosted
+    outputs:
+      artifact_id: ${{ steps.upload_artifact.outputs.artifact-id }}
     
     steps:
       - name: Process Backups
@@ -108,9 +110,38 @@ jobs:
           echo "*(Note: GitHub limits minimum artifact retention to 1 day. This file will auto-delete tomorrow.)*" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Backup Artifact
+        id: upload_artifact
         if: env.TARGET_FILE != ''
         uses: actions/upload-artifact@v4
         with:
           name: database-backup
           path: ${{ env.TARGET_FILE }}
           retention-days: 1
+
+  cleanup_artifact:
+    name: Auto-Delete Backup Artifact
+    needs: download-backup
+    if: needs.download-backup.outputs.artifact_id != ''
+    runs-on: self-hosted
+    permissions:
+      actions: write
+    steps:
+      - name: Wait 1 min then delete artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACT_ID: ${{ needs.download-backup.outputs.artifact_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "⏳ Backup artifact [${ARTIFACT_ID}] will be auto-deleted in 1 minute..."
+          echo "   Please download the artifact before that time."
+          sleep 60
+          echo "🗑️  Deleting artifact ${ARTIFACT_ID}..."
+          if curl -s -f -X DELETE \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${REPO}/actions/artifacts/${ARTIFACT_ID}" 2>&1; then
+            echo "✅ Backup artifact deleted successfully."
+          else
+            echo "⚠️  Artifact failed to delete."
+          fi
