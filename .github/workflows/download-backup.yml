@@ -83,28 +83,34 @@ jobs:
             exit 1
           fi
           
-          if [ -z "${APP_DOMAIN:-}" ]; then
-            echo "ERROR: APP_DOMAIN secret is not set in GitHub Actions. Cannot construct download URL."
-            exit 1
-          fi
+          echo "Downloading $TARGET_FILE from S3 to runner..."
           
-          # GitHub Actions automatically masks ANY secret (including APP_DOMAIN) as ***
-          # We use HTML entities (e.g. sso -> &#115;so) to bypass the masker, but the browser will click through perfectly.
-          obfuscate() {
-            local str="$1"
-            local first_char="${str:0:1}"
-            local rest="${str:1}"
-            local hex=$(printf "%d" "'$first_char")
-            echo -n "&#${hex};${rest}"
-          }
-          SAFE_DOMAIN=$(obfuscate "$APP_DOMAIN")
-          DOWNLOAD_URL="https://${SAFE_DOMAIN}/storage/${APP_SLUG}-backups/${TARGET_FILE}"
+          docker run --rm \
+            --entrypoint sh \
+            -e AWS_ACCESS_KEY_ID \
+            -e AWS_SECRET_ACCESS_KEY \
+            -e AWS_ENDPOINT \
+            -v "$PWD:/workspace" \
+            minio/mc:latest -c "
+              mc alias set s3 \"\$AWS_ENDPOINT\" \"\$AWS_ACCESS_KEY_ID\" \"\$AWS_SECRET_ACCESS_KEY\" --api S3v4 >/dev/null && \
+              mc cp \"s3/$AWS_BUCKET/${APP_SLUG}-backups/$TARGET_FILE\" \"/workspace/$TARGET_FILE\"
+            "
+            
+          echo "TARGET_FILE=$TARGET_FILE" >> $GITHUB_ENV
           
-          echo "✅ Backup is ready for download!"
+          echo "✅ Backup successfully downloaded to runner!"
           
           echo "### 📦 Database Backup Ready" >> $GITHUB_STEP_SUMMARY
-          echo "The database backup **$TARGET_FILE** is ready for download." >> $GITHUB_STEP_SUMMARY
+          echo "The database backup **$TARGET_FILE** has been successfully fetched." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "<a href=\"$DOWNLOAD_URL\">Download Backup (.sql.gz)</a>" >> $GITHUB_STEP_SUMMARY
+          echo "It is securely attached to this workflow run as an **Artifact**. Scroll to the bottom of this page to download it." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "*Do not share this link with unauthorized users.*" >> $GITHUB_STEP_SUMMARY
+          echo "*(Note: GitHub limits minimum artifact retention to 1 day. This file will auto-delete tomorrow.)*" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Backup Artifact
+        if: env.TARGET_FILE != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: ${{ env.TARGET_FILE }}
+          retention-days: 1
