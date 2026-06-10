@@ -179,6 +179,8 @@ jobs:
             'AWS_USE_PATH_STYLE_ENDPOINT=true' \
             'AWS_DEFAULT_REGION=id' \
             'AWS_STORAGE_THROW=true' \
+            'PUBLIC_DISK_DRIVER=s3' \
+            'BACKUPS_DISK_DRIVER=s3' \
             'QUEUE_CONNECTION=database' \
             'CACHE_STORE=database' \
             'SESSION_DRIVER=database' \

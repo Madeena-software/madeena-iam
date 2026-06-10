@@ -39,12 +39,31 @@ return [
         ],
 
         'public' => [
-            'driver' => 'local',
+            'driver' => env('PUBLIC_DISK_DRIVER', 'local'),
             'root' => storage_path('app/public'),
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+            'bucket' => env('AWS_BUCKET'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', true),
             'visibility' => 'public',
-            'throw' => false,
-            'report' => false,
+            'throw' => filter_var(env('AWS_STORAGE_THROW', false), FILTER_VALIDATE_BOOL),
+            'report' => filter_var(env('AWS_STORAGE_REPORT', false), FILTER_VALIDATE_BOOL),
+        ],
+
+        'enterprise_backups' => [
+            'driver' => env('BACKUPS_DISK_DRIVER', 's3'),
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+            'bucket' => env('AWS_BUCKET'),
+            'root' => env('BACKUPS_DISK_DRIVER', 's3') === 'local' ? storage_path('app/backups') : 'backups',
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', true),
+            'throw' => filter_var(env('AWS_STORAGE_THROW', false), FILTER_VALIDATE_BOOL),
+            'report' => filter_var(env('AWS_STORAGE_REPORT', false), FILTER_VALIDATE_BOOL),
         ],
 
         's3' => [
