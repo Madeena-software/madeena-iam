@@ -33,6 +33,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
           AWS_BUCKET: ${{ secrets.MINIO_BUCKET }}
           AWS_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
           APP_SLUG: "madeena-iam"
         run: |
           set -euo pipefail
@@ -82,44 +83,18 @@ jobs:
             exit 1
           fi
           
-          echo "Generating presigned URL for $TARGET_FILE..."
-          
-          # aws s3 presign guarantees the URL includes full IAM signature query parameters, avoiding AccessDenied.
-          PRESIGNED_URL=$(docker run --rm \
-            -e AWS_ACCESS_KEY_ID \
-            -e AWS_SECRET_ACCESS_KEY \
-            -e AWS_DEFAULT_REGION=us-east-1 \
-            amazon/aws-cli s3 presign "s3://$AWS_BUCKET/${APP_SLUG}-backups/$TARGET_FILE" \
-            --endpoint-url "$AWS_ENDPOINT" \
-            --expires-in 3600)
-            
-          if [ -z "$PRESIGNED_URL" ]; then
-             echo "Failed to generate presigned URL!"
-             exit 1
+          if [ -z "${APP_DOMAIN:-}" ]; then
+            echo "ERROR: APP_DOMAIN secret is not set in GitHub Actions. Cannot construct download URL."
+            exit 1
           fi
           
-          # GitHub Actions automatically masks secrets (like the AWS_ENDPOINT and AWS_BUCKET) with ***,
-          # and it ALSO aggressively masks their Base64 equivalents!
-          # We use an embedded python script to safely encode the secret strings into HTML entities (e.g. s3 -> s&#51;)
-          # which the GitHub matcher won't detect, but browsers will seamlessly decode into a working link.
-          python3 -c "
-          import os
-          url = os.environ['PRESIGNED_URL']
-          b = os.environ.get('AWS_BUCKET', '')
-          k = os.environ.get('AWS_ACCESS_KEY_ID', '')
+          DOWNLOAD_URL="https://${APP_DOMAIN}/storage/${APP_SLUG}-backups/${TARGET_FILE}"
           
-          def obf(s):
-              return f'&#{ord(s[0])};' + s[1:] if s else s
+          echo "✅ Backup is ready for download!"
           
-          if b: url = url.replace(b, obf(b))
-          if k: url = url.replace(k, obf(k))
-          url = url.replace('s3', 's&#51;')
-          url = url.replace('mhcsgo', 'm&#104;csgo')
-          
-          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
-              f.write('✅ Backup is ready for download!\n\n')
-              f.write('### 📦 Database Backup Ready\n')
-              f.write(f'The database backup **{os.environ.get(\"TARGET_FILE\", \"backup\")}** is ready for download.\n\n')
-              f.write(f'<a href=\"{url}\">Download Backup (.sql.gz)</a>\n\n')
-              f.write('*Link expires in 1 hour. Do not share this link with unauthorized users.*\n')
-          "
+          echo "### 📦 Database Backup Ready" >> $GITHUB_STEP_SUMMARY
+          echo "The database backup **$TARGET_FILE** is ready for download." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<a href=\"$DOWNLOAD_URL\">Download Backup (.sql.gz)</a>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "*Do not share this link with unauthorized users.*" >> $GITHUB_STEP_SUMMARY
