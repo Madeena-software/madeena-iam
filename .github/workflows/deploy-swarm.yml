@@ -362,7 +362,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 10); do
-            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 30 "http://127.0.0.1:8012" || echo "000")
+            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 30 "http://127.0.0.1:8012/up" || echo "000")
             echo "Attempt $attempt/10 — HTTP $HTTP_STATUS"
             echo "$HTTP_STATUS" | grep -qE '^(200|301|302|307|308)$' && { echo "✅ Healthy"; exit 0; }
             sleep 10
