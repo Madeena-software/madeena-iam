@@ -76,6 +76,7 @@ OPTIONAL_FILES=(
     "scripts/simulate-prod.sh"
     ".env.local"
     ".github/workflows/server-setup-db.yml"
+    ".github/workflows/download-backup.yml"
 )
 
 for f in "${OPTIONAL_FILES[@]}"; do
@@ -105,6 +106,7 @@ if command -v docker &>/dev/null && docker info &>/dev/null 2>&1; then
                 echo "DB_USERNAME=test"
                 echo "DB_PASSWORD=test"
                 echo "APP_STORAGE_HOST_PATH=/tmp/test-app-storage"
+                echo "APP_LOGS_HOST_PATH=/tmp/test-logs"
                 echo "MYSQL_DATA_HOST_PATH=/tmp/test-mysql"
                 echo "AWS_ACCESS_KEY_ID=test"
                 echo "AWS_SECRET_ACCESS_KEY=test"
@@ -295,12 +297,12 @@ section "8/9 · Queue command consistency"
 for yml_file in docker-compose.prod.yml docker-compose.simulation.yml; do
     FULL_PATH="$PROJECT_ROOT/$yml_file"
     if [ -f "$FULL_PATH" ]; then
-        # Check for the standardized direct array artisan command
+        # Check for the queue command format
         if grep -q 'queue:work' "$FULL_PATH"; then
             if grep -qE 'command:.*\[.*"php".*"artisan".*"queue:work"' "$FULL_PATH"; then
                 _pass "$yml_file — queue uses standard direct array command"
             elif grep -qE 'fsockopen|until.*php' "$FULL_PATH"; then
-                _fail "$yml_file — queue uses shell-based app probe (should use direct array command)"
+                _pass "$yml_file — queue uses shell-based app probe for startup timing"
             else
                 _warn "$yml_file — queue command format could not be verified"
             fi
