@@ -47,31 +47,15 @@ RUN apt-get update -qq && \
         zip \
         unzip \
         git \
-        libzip-dev \
-        libpng-dev \
-        libjpeg62-turbo-dev \
-        libfreetype6-dev \
-        libonig-dev \
-        libicu-dev \
-        libxml2-dev \
-        libcurl4-openssl-dev \
-        zlib1g-dev \
         > /dev/null 2>&1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null 2>&1 \
-    && docker-php-ext-install -j"$(nproc)" \
-        bcmath \
-        curl \
-        gd \
-        intl \
-        mbstring \
-        opcache \
-        pcntl \
-        pdo \
-        pdo_mysql \
-        zip \
-        > /dev/null 2>&1
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/install-php-extensions && \
+    install-php-extensions gd zip intl opcache pcntl pdo_mysql bcmath
+# docker-php-ext-install
+
 
 # Stage 3: Application image
 FROM base AS app

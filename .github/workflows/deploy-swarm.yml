@@ -27,7 +27,7 @@ jobs:
   build:
     name: Build Docker Image (Local)
     runs-on: self-hosted
-    timeout-minutes: 25
+    timeout-minutes: 60
     outputs:
       app_version: ${{ steps.version.outputs.app_version }}
 
