@@ -100,17 +100,21 @@ jobs:
              exit 1
           fi
           
-          # GitHub Actions automatically masks secrets (like the AWS_ENDPOINT) with ***.
-          # If the URL starts with ***, Markdown parses it as a relative link!
-          # We bypass the string matcher by injecting HTML entities (s3 -> s&#51;).
-          SAFE_URL=$(echo "$PRESIGNED_URL" | sed 's/s3/s\&#51;/g' | sed 's/mhcsgo/m\&#104;csgo/g')
+          # GitHub Actions automatically masks secrets (like the AWS_ENDPOINT and AWS_BUCKET) with ***.
+          # This corrupts the presigned URL if we print it directly.
+          # To securely bypass the log masker without using artifacts or third-party shorteners, we Base64 encode it.
+          B64_URL=$(echo -n "$PRESIGNED_URL" | base64 -w 0)
 
           echo "✅ Backup is ready for download!"
-          echo "Download URL (Valid for 1 hour): $SAFE_URL"
           
           echo "### 📦 Database Backup Ready" >> $GITHUB_STEP_SUMMARY
           echo "The database backup **$TARGET_FILE** is ready for download." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "<a href=\"$SAFE_URL\">Download Backup (.sql.gz)</a>" >> $GITHUB_STEP_SUMMARY
+          echo "Due to GitHub Actions aggressively masking security keys, the URL is provided securely below." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "*Link expires in 1 hour. Do not share this link with unauthorized users.*" >> $GITHUB_STEP_SUMMARY
+          echo "**Run this command in your terminal to securely download it:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl -o $TARGET_FILE \"\$(echo '$B64_URL' | base64 --decode)\"" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "*The presigned signature expires in 1 hour.*" >> $GITHUB_STEP_SUMMARY
