@@ -18,8 +18,8 @@
 
 ## 2. Active Goal
  
-- **Goal**: `Global Sticky Footer & Dynamic Versioning`
-- **Objective**: `Implement unified sticky/fixed footer with dynamic versioning across the public pages, Filament admin panel, and emails.` (Completed)
+- **Goal**: `Global Footer Alignment & Sizing Adjustments`
+- **Objective**: `Fix footer position to stick to viewport bottom on short page content, center text robustly, and scale font-size for better readability.` (Completed)
 
 ---
 
@@ -68,6 +68,11 @@
 - **Milestone 68**: Published mail templates and customized default HTML and text email footers to use dynamic copyright and versioning.
 - **Milestone 69**: Implemented pyramid-compliant Unit and Feature tests for version resolution and footer rendering with 100% pass rate.
 - **Milestone 70**: Implemented and executed automated Playwright E2E test suite (`tests/e2e/footer.spec.ts`) validating sticky footer visibility and correct version info on public and Filament Admin panels.
+- **Milestone 71**: Customized the footer layout by modifying `footer.blade.php` to use centered text (`text-center` alignment and `text-[10px]` styling) with top border, showing copyright year and version with a `v` prefix (`v1.0.0`).
+- **Milestone 72**: Resolved the footer alignment issue on dashboard/short content pages by registering a Filament `HEAD_END` render hook in `AppServiceProvider.php` to inject CSS (`.fi-main { flex-grow: 1 !important; }`), forcing the main content area to fill the screen and push the footer to the bottom.
+- **Milestone 73**: Updated E2E Playwright test assertions in `tests/e2e/footer.spec.ts` to expect the `v` prefix in the version string (`v1.0.0` format).
+- **Milestone 74**: Kept and polished the temporary Playwright E2E layout test `tests/e2e/layout.spec.ts` for future layout troubleshooting and type-safety.
+- **Milestone 75**: Cleared view, config, route, and application caches.
 
 ---
 

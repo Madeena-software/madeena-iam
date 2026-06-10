@@ -92,8 +92,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Filament footer hook
         FilamentView::registerRenderHook(
-            PanelsRenderHook::PAGE_END,
+            PanelsRenderHook::FOOTER,
             fn (): \Illuminate\Contracts\View\View => view('components.footer')
+        );
+
+        // Inject CSS to make .fi-main expand and push footer to the bottom
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::HEAD_END,
+            fn (): string => '<style>.fi-main { flex-grow: 1 !important; }</style>'
         );
     }
 }

@@ -15,9 +15,8 @@ test('global sticky footer visibility and correct version info', async ({ page }
   await page.waitForLoadState('networkidle');
 
   // Verify the footer is visible and has dynamic version
-  const loginFooter = page.locator('.fixed.bottom-0');
+  const loginFooter = page.getByText('Madeena. All rights reserved.').first();
   await expect(loginFooter).toBeVisible();
-  await expect(loginFooter).toContainText('Madeena. All rights reserved.');
   await expect(loginFooter).toContainText(`v${rawVersion}`);
 
   // 2. Login as admin and check footer in Filament Admin panel
@@ -30,8 +29,7 @@ test('global sticky footer visibility and correct version info', async ({ page }
   await page.waitForLoadState('networkidle');
 
   // Verify Filament page has the sticky footer
-  const filamentFooter = page.locator('.fixed.bottom-0');
+  const filamentFooter = page.getByText('Madeena. All rights reserved.').first();
   await expect(filamentFooter).toBeVisible();
-  await expect(filamentFooter).toContainText('Madeena. All rights reserved.');
   await expect(filamentFooter).toContainText(`v${rawVersion}`);
 });
