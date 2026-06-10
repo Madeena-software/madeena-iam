@@ -84,16 +84,14 @@ jobs:
           
           echo "Generating presigned URL for $TARGET_FILE..."
           
-          # mc share output format is usually: URL: https://...
+          # aws s3 presign guarantees the URL includes full IAM signature query parameters, avoiding AccessDenied.
           PRESIGNED_URL=$(docker run --rm \
-            --entrypoint sh \
             -e AWS_ACCESS_KEY_ID \
             -e AWS_SECRET_ACCESS_KEY \
-            -e AWS_ENDPOINT \
-            minio/mc:latest -c "
-              mc alias set s3 \"\$AWS_ENDPOINT\" \"\$AWS_ACCESS_KEY_ID\" \"\$AWS_SECRET_ACCESS_KEY\" --api S3v4 >/dev/null && \
-              mc share download --expire 1h \"s3/$AWS_BUCKET/${APP_SLUG}-backups/$TARGET_FILE\"
-            " | grep '^URL:' | awk '{print $2}')
+            -e AWS_DEFAULT_REGION=us-east-1 \
+            amazon/aws-cli s3 presign "s3://$AWS_BUCKET/${APP_SLUG}-backups/$TARGET_FILE" \
+            --endpoint-url "$AWS_ENDPOINT" \
+            --expires-in 3600)
             
           if [ -z "$PRESIGNED_URL" ]; then
              echo "Failed to generate presigned URL!"
