@@ -473,5 +473,31 @@ Adjust footer layout alignment on short-content dashboard pages, center text rob
 ### Results
 - ✅ **Success**: Layout alignment resolved (footer is at viewport bottom), version is centered and prefixed as `v1.0.0`, font-size is adjusted, and automated E2E tests are updated and fully passing.
 
+## [2026-06-11] Session 23: Nullable client_app_user_id, Link API, and SSO Auto-Creation
+
+### Objective
+Modify the `client_app_user_id` to be nullable, remove its automatic UUID generation, implement the bidirectional mapping link API (`PATCH /api/v1/client-user/link`), enable SSO auto-pivot registration as `pending_approval` with admin notifications, and document the Hybrid RBAC strategy.
+
+### Actions Performed
+1. **Database Schema & Model Refactoring**:
+   - Created and ran the migration [2026_06_11_000000_make_client_app_user_id_nullable.php](file:///var/www/madeena-iam/database/migrations/2026_06_11_000000_make_client_app_user_id_nullable.php) making `client_app_user_id` nullable in the `client_user` table.
+   - Modified [ClientUser.php](file:///var/www/madeena-iam/app/Models/ClientUser.php) to remove the automatic UUID generation inside the `creating` event.
+2. **Link API Implementation**:
+   - Created [ClientUserController.php](file:///var/www/madeena-iam/app/Http/Controllers/Api/V1/ClientUserController.php) with the `link()` method to map the local client application user ID. The controller resolves client pivots by client ID, falling back to name comparison to support personal access tokens (mirroring `UserController::show`).
+   - Registered the `PATCH /api/v1/client-user/link` route inside the `auth:api` group in [api.php](file:///var/www/madeena-iam/routes/api.php).
+   - Updated the `register()` method in [AuthController.php](file:///var/www/madeena-iam/app/Http/Controllers/Api/V1/AuthController.php) to accept and store an optional `client_app_user_id`.
+3. **SSO Auto-Pivot & Admin Notifications**:
+   - Updated [CheckClientAccess.php](file:///var/www/madeena-iam/app/Http/Middleware/CheckClientAccess.php) (standard SSO flow) and [AuthorizationController.php](file:///var/www/madeena-iam/app/Http/Controllers/Oauth/AuthorizationController.php) (silent SSO flow) to automatically attach users to a client with a `pending_approval` status on their first login attempt, and queue email notifications to `super_admin`s.
+4. **Testing & Code Formatting**:
+   - Formatted all code modifications using Pint (`./vendor/bin/pint`).
+   - Created [ClientUserLinkTest.php](file:///var/www/madeena-iam/tests/Feature/ClientUserLinkTest.php) to verify the link API endpoints.
+   - Updated [NewUserRegistrationAdminNotificationTest.php](file:///var/www/madeena-iam/tests/Feature/NewUserRegistrationAdminNotificationTest.php), [ApiAuthenticationTest.php](file:///var/www/madeena-iam/tests/Feature/ApiAuthenticationTest.php), and [FilamentResourceTest.php](file:///var/www/madeena-iam/tests/Feature/FilamentResourceTest.php) to cover all nullable, optional registration, and SSO auto-pivot creation flows.
+   - Verified that all 85 unit/feature tests pass successfully.
+5. **Documentation**:
+   - Updated Hybrid RBAC and Link API flows in [madeena_iam_prd.md](file:///var/www/madeena-iam/docs/madeena_iam_prd.md) and [project-context.md](file:///var/www/madeena-iam/.ai/rules/project-context.md).
+
+### Results
+- ✅ **Success**: Reverted `client_app_user_id` to nullable, built the mapping Link API, integrated auto-creation of pivot tables on first SSO login, and documented the Hybrid RBAC strategy. All 85 automated test cases are fully passing.
+
 
 

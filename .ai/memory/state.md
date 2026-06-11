@@ -18,8 +18,8 @@
 
 ## 2. Active Goal
  
-- **Goal**: `Global Footer Alignment & Sizing Adjustments`
-- **Objective**: `Fix footer position to stick to viewport bottom on short page content, center text robustly, and scale font-size for better readability.` (Completed)
+- **Goal**: `Fix client_app_user_id nullability, implement Link API, and SSO auto-pivot creation`
+- **Objective**: `Revert client_app_user_id to nullable, remove UUID auto-generation, build bidirectional link API, auto-create pending_approval pivots during SSO login with super admin email alerts, and document Hybrid RBAC.` (Completed)
 
 ---
 
@@ -73,6 +73,11 @@
 - **Milestone 73**: Updated E2E Playwright test assertions in `tests/e2e/footer.spec.ts` to expect the `v` prefix in the version string (`v1.0.0` format).
 - **Milestone 74**: Kept and polished the temporary Playwright E2E layout test `tests/e2e/layout.spec.ts` for future layout troubleshooting and type-safety.
 - **Milestone 75**: Cleared view, config, route, and application caches.
+- **Milestone 76**: Reverted `client_app_user_id` to nullable in `client_user` table using migration, and removed auto-generation UUID from `ClientUser` pivot model.
+- **Milestone 77**: Implemented bidirectional link endpoint `PATCH /api/v1/client-user/link` in `ClientUserController` supporting personal access token lookups, and accepted optional client ID parameter in `AuthController@register`.
+- **Milestone 78**: Integrated first-time SSO login auto-pivot registration and admin notification email alerts inside standard and silent authorize flows.
+- **Milestone 79**: Created `ClientUserLinkTest` and updated registration, Filament, and notification tests to secure a 100% PHPUnit test pass rate (85 tests passing).
+- **Milestone 80**: Documented the Hybrid RBAC strategy and new API endpoint specifications in both `madeena_iam_prd.md` and `project-context.md`.
 
 ---
 
