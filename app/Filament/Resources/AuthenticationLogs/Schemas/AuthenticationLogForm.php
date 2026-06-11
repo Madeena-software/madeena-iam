@@ -19,6 +19,10 @@ class AuthenticationLogForm
                     ->formatStateUsing(fn ($record) => $record?->authenticatable?->name ?? $record?->authenticatable_id),
                 TextInput::make('authenticatable_type'),
                 TextInput::make('ip_address'),
+                TextInput::make('client.name')
+                    ->label('Client App'),
+                TextInput::make('auth_type')
+                    ->label('Auth Type'),
                 Textarea::make('user_agent')
                     ->columnSpanFull(),
                 DateTimePicker::make('login_at'),

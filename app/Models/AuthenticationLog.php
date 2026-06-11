@@ -22,4 +22,9 @@ class AuthenticationLog extends Model
     {
         return $this->morphTo();
     }
+
+    public function client()
+    {
+        return $this->belongsTo(\Laravel\Passport\Client::class, 'client_id');
+    }
 }

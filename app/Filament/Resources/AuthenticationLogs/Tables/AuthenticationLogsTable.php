@@ -24,6 +24,14 @@ class AuthenticationLogsTable
                 TextColumn::make('ip_address')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('client.name')
+                    ->label('Client App')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('auth_type')
+                    ->label('Auth Type')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('login_at')
                     ->dateTime()
                     ->sortable(),

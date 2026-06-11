@@ -22,7 +22,7 @@ class ClientRepository extends PassportClientRepository
 
         try {
             // Attempt to decrypt the raw stored secret
-            $decryptedSecret = decrypt($rawSecret);
+            $decryptedSecret = decrypt($rawSecret, false);
 
             return hash_equals($decryptedSecret, $clientSecret);
         } catch (DecryptException) {
