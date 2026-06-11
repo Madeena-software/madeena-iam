@@ -16,8 +16,17 @@ class LoginController extends Controller
     /**
      * Display the login view.
      */
-    public function showLoginForm(): View
+    public function showLoginForm(Request $request): View
     {
+        $intendedUrl = session()->get('url.intended');
+        if ($intendedUrl) {
+            $parsedUrl = parse_url($intendedUrl);
+            if (isset($parsedUrl['query'])) {
+                parse_str($parsedUrl['query'], $queryParams);
+                $request->query->add($queryParams);
+            }
+        }
+
         return view('auth.login');
     }
 
