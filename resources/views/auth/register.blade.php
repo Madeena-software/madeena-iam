@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sso madeena</title>
+    <title>register - madeena</title>
     
     <!-- Google Fonts: Inter & Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -118,7 +118,7 @@
             }
         }
 
-        /* Login Card */
+        /* Register Card */
         .login-card {
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -193,28 +193,6 @@
             box-shadow: 0 0 0 4px var(--input-focus-ring);
         }
 
-        /* Remember Me & Checkbox */
-        .checkbox-group {
-            margin-bottom: 24px;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            color: var(--text-muted);
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .checkbox-input {
-            margin-right: 10px;
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
-            accent-color: var(--primary-color);
-        }
-
         /* Actions Row */
         .actions-row {
             display: flex;
@@ -235,6 +213,8 @@
             cursor: pointer;
             transition: all 0.15s ease;
             box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.1);
+            width: 100%;
+            text-align: center;
         }
 
         .btn-submit:hover {
@@ -246,19 +226,6 @@
 
         .btn-submit:active {
             transform: translateY(1px);
-        }
-
-        .forgot-link {
-            font-size: 13px;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.15s ease;
-        }
-
-        .forgot-link:hover {
-            color: var(--primary-hover);
-            text-decoration: underline;
         }
 
         /* Register Divider */
@@ -364,16 +331,6 @@
                 border-left: 4px solid #eab308;
             }
         }
-
-        /* Footer */
-        .footer-bar {
-            text-align: center;
-            padding: 24px;
-            font-size: 12px;
-            color: var(--text-muted);
-            border-top: 1px solid var(--card-border);
-            background-color: #ffffff;
-        }
     </style>
 </head>
 <body>
@@ -390,19 +347,13 @@
     <main class="main-wrapper">
         <div class="grid-container">
             
-            <!-- Left Column: Login Card -->
+            <!-- Left Column: Register Card -->
             <div class="login-card">
                 <div class="card-header">
-                    sign in
+                    register
                 </div>
                 <div class="card-body">
                     
-                    @if (session('status'))
-                        <div class="success-alert" role="alert" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 14px 18px; margin-bottom: 24px; border-radius: 8px; font-size: 13px; line-height: 1.5;">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
                     @if ($errors->any())
                         <div class="error-alert" role="alert">
                             <ul>
@@ -413,8 +364,27 @@
                         </div>
                     @endif
 
-                    <form action="{{ url('/login') }}" method="POST" id="login-form">
+                    <form action="{{ url('/register') }}" method="POST" id="register-form">
                         @csrf
+
+                        <!-- Pass original query parameters as hidden input fields -->
+                        @foreach(request()->query() as $key => $value)
+                            <input type="hidden" name="{{ htmlspecialchars($key) }}" value="{{ htmlspecialchars($value) }}">
+                        @endforeach
+
+                        <div class="form-group">
+                            <label for="name" class="form-label">Name</label>
+                            <input 
+                                type="text" 
+                                name="name" 
+                                id="name" 
+                                class="form-input" 
+                                value="{{ old('name') }}" 
+                                required 
+                                autofocus 
+                                autocomplete="name"
+                            >
+                        </div>
 
                         <div class="form-group">
                             <label for="email" class="form-label">Email Address</label>
@@ -425,7 +395,6 @@
                                 class="form-input" 
                                 value="{{ old('email') }}" 
                                 required 
-                                autofocus 
                                 autocomplete="email"
                             >
                         </div>
@@ -438,36 +407,34 @@
                                 id="password" 
                                 class="form-input" 
                                 required 
-                                autocomplete="current-password"
+                                autocomplete="new-password"
                             >
                         </div>
 
-                        <div class="checkbox-group">
-                            <label class="checkbox-label" for="remember">
-                                <input 
-                                    type="checkbox" 
-                                    name="remember" 
-                                    id="remember" 
-                                    class="checkbox-input"
-                                    {{ old('remember') ? 'checked' : '' }}
-                                >
-                                <span class="checkbox-text">Keep me signed in</span>
-                            </label>
+                        <div class="form-group">
+                            <label for="password_confirmation" class="form-label">Confirm Password</label>
+                            <input 
+                                type="password" 
+                                name="password_confirmation" 
+                                id="password_confirmation" 
+                                class="form-input" 
+                                required 
+                                autocomplete="new-password"
+                            >
                         </div>
 
                         <div class="actions-row">
-                            <button type="submit" class="btn-submit" id="submit-login">
-                                Sign In
+                            <button type="submit" class="btn-submit" id="submit-register">
+                                Register
                             </button>
-                            <a href="#" class="forgot-link">Forgot password?</a>
                         </div>
                     </form>
 
-                    <!-- Register Divider -->
+                    <!-- Divider to Login -->
                     <div class="divider">
-                        <span class="divider-text">Don't have an account?</span>
+                        <span class="divider-text">Already have an account?</span>
                     </div>
-                    <a href="{{ route('register', request()->query()) }}" class="btn-request-access" id="register-link">Register here</a>
+                    <a href="{{ route('login', request()->query()) }}" class="btn-request-access" id="login-link">Sign In here</a>
                 </div>
             </div>
 
@@ -475,12 +442,12 @@
             <div class="info-column">
                 <h1 class="info-title">Secure Single Sign-On</h1>
                 <p class="info-desc">
-                    Madeena SSO is the central identity provider for your Madeena application services. Sign in with your registered corporate credentials to access all permitted Madeena services.
+                    Madeena SSO is the central identity provider for your Madeena application services. Sign up here to register credentials and request authorization for available services.
                 </p>
                 <div class="warning-card">
-                    <div class="warning-title">Security Recommendation</div>
+                    <div class="warning-title">Access Policy</div>
                     <div class="warning-text">
-                        For security reasons, please log out and close all browser windows when you are finished accessing protected services, especially on shared or public devices.
+                        Newly registered accounts require administrative approval before they can access corporate client applications. An email will be dispatched to administrators once registration is completed.
                     </div>
                 </div>
             </div>
