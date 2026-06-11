@@ -41,10 +41,11 @@ Execute the following integration steps:
 - Create an `SSOController` (or add to an existing `LoginController`).
 - Implement the redirect method to send the user to `madeena-iam`.
 - Implement the callback method:
-  - Retrieve the user details from the provider.
+  - Handle exceptions gracefully (e.g., network failure or `access_denied` if the central IAM authorization is `pending_approval`).
+  - Retrieve the user details and access token from the provider.
   - Find or create a local user record mapping to the IAM user.
+  - Call the central IAM Link API (`PATCH /api/v1/client-user/link`) using the user's access token (`Http::withToken($user->token)->patch('.../api/v1/client-user/link', ['client_app_user_id' => $localUser->id])`) to establish bidirectional mapping.
   - Log the user in locally.
-  - Handle exceptions gracefully (e.g., user denial, network failure).
 
 ### Step 4: Update the UI
 - Modify the login view (`resources/views/auth/login.blade.php` or equivalent).
