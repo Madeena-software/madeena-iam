@@ -16,10 +16,10 @@
 
 ---
 
-## 2. Active Goal
+### 2. Active Goal
  
-- **Goal**: `Fix client_app_user_id nullability, implement Link API, and SSO auto-pivot creation`
-- **Objective**: `Revert client_app_user_id to nullable, remove UUID auto-generation, build bidirectional link API, auto-create pending_approval pivots during SSO login with super admin email alerts, and document Hybrid RBAC.` (Completed)
+- **Goal**: `Implement Centralized Web Registration Page`
+- **Objective**: `Implement /register route, RegisterController, custom validator, SSO registration logic with pending approval client user pivots, admin registration alerts, and comprehensive Unit, Feature, and E2E Playwright test coverage.` (Completed)
 
 ---
 
@@ -78,6 +78,11 @@
 - **Milestone 78**: Integrated first-time SSO login auto-pivot registration and admin notification email alerts inside standard and silent authorize flows.
 - **Milestone 79**: Created `ClientUserLinkTest` and updated registration, Filament, and notification tests to secure a 100% PHPUnit test pass rate (85 tests passing).
 - **Milestone 80**: Documented the Hybrid RBAC strategy and new API endpoint specifications in both `madeena_iam_prd.md` and `project-context.md`.
+- **Milestone 81**: Registered `GET /register` and `POST /register` web routes in the guest middleware group in `routes/web.php`.
+- **Milestone 82**: Implemented `RegisterController.php` validating user info, creating users, attaching clients as `pending_approval`, queueing notification mail, logging in, and redirecting appropriately.
+- **Milestone 83**: Redesigned `register.blade.php` to mirror the premium design system from the login page, passing URL parameters as hidden input fields.
+- **Milestone 84**: Implemented Unit, Feature, and Playwright E2E tests for web registration.
+- **Milestone 85**: Successfully ran all 91 PHPUnit tests and 11 Playwright E2E tests, achieving a 100% pass rate.
 
 ---
 

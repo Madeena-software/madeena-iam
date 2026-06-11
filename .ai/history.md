@@ -499,5 +499,30 @@ Modify the `client_app_user_id` to be nullable, remove its automatic UUID genera
 ### Results
 - ✅ **Success**: Reverted `client_app_user_id` to nullable, built the mapping Link API, integrated auto-creation of pivot tables on first SSO login, and documented the Hybrid RBAC strategy. All 85 automated test cases are fully passing.
 
+## [2026-06-11] Session 24: Centralized Web Registration Page Integration
+
+### Objective
+Implement the Central Identity Provider (IAM) Web Registration Page (`/register`) to handle standalone and OAuth-based user registrations with automated test coverage.
+
+### Actions Performed
+1. **Web Route Registration**:
+   - Added `GET /register` and `POST /register` to the `guest` group in `routes/web.php`.
+2. **Register Controller Implementation**:
+   - Created `RegisterController.php` with input validation, user creation, dynamic OAuth SSO client detection, `client_user` pivot table attachment with `pending_approval` status, and queued email notifications to `super_admin` users.
+   - Configured redirection to route back to the OAuth authorization endpoint (`/oauth/authorize`) with all query parameters if `client_id` is present, or to `/` for standalone registration.
+3. **Frontend Views**:
+   - Updated `login.blade.php` with a "Don't have an account? Register here" link using the existing CSS styling and preserving parameters via query string.
+   - Created `register.blade.php` matching the premium layout and glassmorphism styling of the login view. Incorporated a loop to output all query parameters as hidden input fields.
+4. **Pyramid Automated Testing**:
+   - Created Unit Test `RegisterControllerTest.php` asserting correct view resolution.
+   - Created Feature Test `WebRegistrationTest.php` covering validation, standalone registration, and SSO auto-pivots with admin email dispatch.
+   - Created Playwright E2E Test `web-registration.spec.ts` to simulate actual user interaction for both standalone and SSO registration flows in a real browser.
+5. **Code Quality and Execution**:
+   - Verified that all 91 PHPUnit tests and 11 Playwright E2E tests pass successfully (100% green).
+
+### Results
+- ✅ **Success**: Completed centralized web registration flow with admin notification emails, query parameter preservation, and robust multi-tiered automated testing.
+
+
 
 
