@@ -36,3 +36,35 @@ Route::get('storage/{path}', function ($path) {
 
     return Storage::disk('s3')->response($path);
 })->where('path', '.*');
+
+if (app()->environment('local')) {
+    Route::get('/mail-preview/onboarding', function () {
+        $user = \App\Models\User::first() ?? new \App\Models\User([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+        ]);
+        return new \App\Mail\OnboardingMail($user, 'https://sso.madeena.my.id/password-reset/dummy-token');
+    });
+
+    Route::get('/mail-preview/registration', function () {
+        $user = \App\Models\User::first() ?? new \App\Models\User([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+        ]);
+        $client = \App\Models\OauthClient::first() ?? new \App\Models\OauthClient([
+            'name' => 'Madeena Client App',
+        ]);
+        return new \App\Mail\NewUserRegistrationAdminMail($user, $client);
+    });
+
+    Route::get('/mail-preview/reset-password', function () {
+        $user = \App\Models\User::first() ?? new \App\Models\User([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+        ]);
+        $notification = new \Illuminate\Auth\Notifications\ResetPassword('dummy-token-123');
+        return $notification->toMail($user);
+    });
+}
+
+
