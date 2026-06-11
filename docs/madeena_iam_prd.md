@@ -147,10 +147,14 @@ sequenceDiagram
 
     IAM->>DB: Checks client_user table: Is User allowed to access Client?
     
-    alt Permission Denied
-        IAM-->>Browser: Redirect to Workspace callback with access_denied error
-        Browser-->>App: GET /callback?error=access_denied&state=csrf_state
-        App-->>User: Displays error screen ("Not authorized for Workspace")
+    alt Permission Denied (Not Associated)
+        IAM->>DB: Auto-creates client_user pivot as pending_approval
+        IAM->>IAM: Queues notification email to super_admins
+        IAM-->>Browser: Returns 403 Forbidden ("Your account is pending approval...")
+        Browser-->>User: Displays pending approval screen
+    else Permission Denied (Pending/Suspended/Blocked)
+        IAM-->>Browser: Returns 403 Forbidden ("Your account is not approved or suspended...")
+        Browser-->>User: Displays access restricted screen
     else Permission Granted
         IAM->>IAM: Generates temporary Authorization Code
         IAM-->>Browser: Redirect to Workspace callback with code
@@ -225,9 +229,10 @@ sequenceDiagram
     else Active SSO Session Found
         IAM->>DB: Checks if User is allowed to access ERP Client
         alt Permission Denied
-            IAM-->>Browser: Redirect back to ERP callback with error
+            Note over IAM: Auto-creates pivot as pending_approval & queues admin email
+            IAM-->>Browser: Redirect back to ERP callback with error=access_denied
             Browser-->>App: GET /callback?error=access_denied
-            App-->>Browser: Show "Access Denied: Not authorized for ERP" error screen
+            App-->>Browser: Show "Access Denied: Pending approval" error screen
         else Permission Granted
             IAM->>IAM: Generates temporary Authorization Code
             IAM-->>Browser: Redirect to ERP callback with code
@@ -321,6 +326,7 @@ The system centers around the `User` and `OauthClient` models. A pivot table `cl
 | `id` | bigint | PK | Pivot Primary Key |
 | `user_id` | uuid | FK -> `users` | The user ID |
 | `client_id` | uuid | FK -> `oauth_clients` | The app ID |
+| `client_app_user_id` | string | | ID of the user in the client application database (nullable) |
 | `status` | string | | `pending_approval`, `approved`, `suspended` |
 | `approved_at` | timestamp | | When the user was approved |
 
@@ -472,5 +478,6 @@ The system centers around the `User` and `OauthClient` models. A pivot table `cl
 | `POST` | `/api/v1/auth/register` | None | Register new user as pending |
 | `GET` | `/api/v1/user` | Bearer | Get current authenticated user profile |
 | `POST` | `/api/v1/auth/logout` | Bearer | Invalidate token and session |
+| `PATCH`| `/api/v1/client-user/link`| Bearer | Link client app user ID |
 | `GET` | `/api/v1/sessions` | Bearer | List active device sessions |
 | `DELETE`| `/api/v1/sessions/{id}`| Bearer | Revoke a session |

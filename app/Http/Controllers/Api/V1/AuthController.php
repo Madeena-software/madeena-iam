@@ -155,6 +155,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
             'client_id' => 'required|uuid',
             'client_secret' => 'required|string',
+            'client_app_user_id' => 'nullable|string|max:255',
         ]);
 
         $client = OauthClient::where('id', $request->client_id)
@@ -175,6 +176,7 @@ class AuthController extends Controller
         $user->clients()->attach($client->id, [
             'status' => UserStatus::PENDING_APPROVAL->value,
             'is_blocked' => false,
+            'client_app_user_id' => $request->input('client_app_user_id'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

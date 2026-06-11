@@ -283,7 +283,7 @@ class FilamentResourceTest extends TestCase
         $this->assertTrue($pivot->is_blocked);
     }
 
-    public function test_client_user_auto_generates_client_app_user_id(): void
+    public function test_client_user_allows_nullable_client_app_user_id(): void
     {
         $user = User::factory()->create();
 
@@ -305,15 +305,14 @@ class FilamentResourceTest extends TestCase
             'is_active' => true,
         ]);
 
-        // 1. Verify auto-generation when client_app_user_id is not specified
+        // 1. Verify null when client_app_user_id is not specified
         $user->clients()->attach($client1->id, [
             'status' => UserStatus::PENDING_APPROVAL->value,
             'is_blocked' => false,
         ]);
 
         $pivot1 = $user->clients()->wherePivot('client_id', $client1->id)->first()->pivot;
-        $this->assertNotNull($pivot1->client_app_user_id);
-        $this->assertTrue(Str::isUuid($pivot1->client_app_user_id));
+        $this->assertNull($pivot1->client_app_user_id);
 
         // 2. Verify override is preserved when client_app_user_id is explicitly passed
         $user->clients()->attach($client2->id, [

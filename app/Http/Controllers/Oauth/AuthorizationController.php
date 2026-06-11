@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Oauth;
 
 use App\Enums\UserStatus;
+use App\Mail\NewUserRegistrationAdminMail;
 use App\Models\AuthenticationLog;
+use App\Models\OauthClient;
 use App\Services\GeoIPService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Passport\Bridge\User;
 use Laravel\Passport\Contracts\AuthorizationViewResponse;
 use Laravel\Passport\Http\Controllers\AuthorizationController as PassportAuthorizationController;
 use League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthorizationController extends PassportAuthorizationController
@@ -56,6 +60,22 @@ class AuthorizationController extends PassportAuthorizationController
             $clientId = $authRequest->getClient()->getIdentifier();
 
             $pivot = $user->clients()->wherePivot('client_id', $clientId)->first();
+
+            if (! $pivot) {
+                $user->clients()->attach($clientId, [
+                    'status' => UserStatus::PENDING_APPROVAL->value,
+                    'is_blocked' => false,
+                ]);
+                $pivot = $user->clients()->wherePivot('client_id', $clientId)->first();
+
+                // Notify admins of new pending request
+                $oauthClient = OauthClient::find($clientId);
+                $roleExists = Role::where('name', 'super_admin')->exists();
+                $admins = $roleExists ? \App\Models\User::role('super_admin')->get() : collect();
+                if ($admins->isNotEmpty() && $oauthClient) {
+                    Mail::to($admins)->queue(new NewUserRegistrationAdminMail($user, $oauthClient));
+                }
+            }
 
             $isPermitted = $pivot
                 && $pivot->pivot->status === UserStatus::APPROVED

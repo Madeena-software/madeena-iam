@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ClientUserController;
 use App\Http\Controllers\Api\V1\DeviceSessionController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -23,6 +24,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:api')->group(function () {
         Route::get('/user', [UserController::class, 'show']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::patch('/client-user/link', [ClientUserController::class, 'link']);
     });
 
     Route::middleware([

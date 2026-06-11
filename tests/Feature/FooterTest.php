@@ -8,8 +8,8 @@ use App\Mail\NewUserRegistrationAdminMail;
 use App\Models\OauthClient;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class FooterTest extends TestCase
@@ -22,7 +22,7 @@ class FooterTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Madeena. All rights reserved.');
-        $response->assertSee('v' . config('app.version'));
+        $response->assertSee('v'.config('app.version'));
     }
 
     public function test_email_template_footer_contains_copyright_and_version(): void
@@ -42,6 +42,6 @@ class FooterTest extends TestCase
         $html = $mailable->render();
 
         $this->assertStringContainsString('Madeena. All rights reserved.', $html);
-        $this->assertStringContainsString('v' . config('app.version'), $html);
+        $this->assertStringContainsString('v'.config('app.version'), $html);
     }
 }

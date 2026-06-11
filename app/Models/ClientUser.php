@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -31,9 +30,6 @@ class ClientUser extends Pivot
             if ($model->status === UserStatus::APPROVED) {
                 $model->approved_at = now();
                 $model->approved_by = auth()->id();
-            }
-            if (empty($model->client_app_user_id)) {
-                $model->client_app_user_id = (string) Str::uuid();
             }
         });
         static::created(function ($model) {

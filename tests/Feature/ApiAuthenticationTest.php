@@ -314,4 +314,49 @@ class ApiAuthenticationTest extends TestCase
                 ],
             ]);
     }
+
+    public function test_api_registration_accepts_optional_client_app_user_id(): void
+    {
+        $payload = [
+            'name' => 'John Doe 2',
+            'email' => 'john2@example.com',
+            'password' => 'securePassword123',
+            'client_id' => $this->client->id,
+            'client_secret' => $this->clientSecret,
+            'client_app_user_id' => 'custom-app-user-id-555',
+        ];
+
+        $response = $this->postJson('/api/v1/auth/register', $payload);
+
+        $response->assertStatus(201);
+
+        $user = User::where('email', 'john2@example.com')->first();
+        $this->assertNotNull($user);
+
+        $pivot = $user->clients()->wherePivot('client_id', $this->client->id)->first();
+        $this->assertNotNull($pivot);
+        $this->assertEquals('custom-app-user-id-555', $pivot->pivot->client_app_user_id);
+    }
+
+    public function test_api_registration_without_client_app_user_id_stores_null(): void
+    {
+        $payload = [
+            'name' => 'John Doe 3',
+            'email' => 'john3@example.com',
+            'password' => 'securePassword123',
+            'client_id' => $this->client->id,
+            'client_secret' => $this->clientSecret,
+        ];
+
+        $response = $this->postJson('/api/v1/auth/register', $payload);
+
+        $response->assertStatus(201);
+
+        $user = User::where('email', 'john3@example.com')->first();
+        $this->assertNotNull($user);
+
+        $pivot = $user->clients()->wherePivot('client_id', $this->client->id)->first();
+        $this->assertNotNull($pivot);
+        $this->assertNull($pivot->pivot->client_app_user_id);
+    }
 }

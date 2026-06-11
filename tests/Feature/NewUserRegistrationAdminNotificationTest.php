@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\UserStatus;
 use App\Mail\NewUserRegistrationAdminMail;
 use App\Models\OauthClient;
 use App\Models\User;
@@ -43,8 +44,8 @@ class NewUserRegistrationAdminNotificationTest extends TestCase
             'id' => Str::uuid()->toString(),
             'name' => 'Test Client App',
             'secret' => Hash::make($this->clientSecret),
-            'redirect_uris' => 'https://testapp.local/callback',
-            'grant_types' => 'password,authorization_code',
+            'redirect_uris' => ['https://testapp.local/callback'],
+            'grant_types' => ['password', 'authorization_code'],
             'revoked' => false,
             'is_active' => true,
         ]);
@@ -103,5 +104,96 @@ class NewUserRegistrationAdminNotificationTest extends TestCase
         $response->assertStatus(201);
 
         Mail::assertNothingQueued();
+    }
+
+    public function test_sso_silent_flow_auto_creates_pivot_and_notifies_admin(): void
+    {
+        Mail::fake();
+
+        // Create a super_admin role and user
+        $role = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+        ]);
+        $admin->assignRole($role);
+
+        $user = User::factory()->create();
+
+        // Ensure user is not registered for this client initially
+        $this->assertFalse($user->clients()->where('client_id', $this->client->id)->exists());
+
+        $queryParams = [
+            'client_id' => $this->client->id,
+            'redirect_uri' => 'https://testapp.local/callback',
+            'response_type' => 'code',
+            'scope' => '',
+            'state' => 'state-123456',
+            'prompt' => 'none',
+        ];
+
+        $response = $this->actingAs($user, 'web')
+            ->get('/oauth/authorize?'.http_build_query($queryParams));
+
+        $response->assertStatus(302);
+        $response->assertRedirect('https://testapp.local/callback?error=access_denied&state=state-123456');
+
+        // Assert that the client_user pivot was auto-created with pending_approval
+        $pivot = $user->clients()->wherePivot('client_id', $this->client->id)->first();
+        $this->assertNotNull($pivot);
+        $this->assertEquals(UserStatus::PENDING_APPROVAL, $pivot->pivot->status);
+
+        // Assert that the email was queued to the super admin
+        Mail::assertQueued(NewUserRegistrationAdminMail::class, function ($mail) use ($admin, $user) {
+            return $mail->hasTo($admin->email) &&
+                   $mail->user->id === $user->id &&
+                   $mail->client->id === $this->client->id;
+        });
+    }
+
+    public function test_sso_standard_flow_auto_creates_pivot_and_notifies_admin(): void
+    {
+        Mail::fake();
+
+        // Create a super_admin role and user
+        $role = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $admin = User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+        ]);
+        $admin->assignRole($role);
+
+        $user = User::factory()->create();
+
+        // Ensure user is not registered for this client initially
+        $this->assertFalse($user->clients()->where('client_id', $this->client->id)->exists());
+
+        // prompt is empty (standard flow)
+        $queryParams = [
+            'client_id' => $this->client->id,
+            'redirect_uri' => 'https://testapp.local/callback',
+            'response_type' => 'code',
+            'scope' => '',
+            'state' => 'state-123456',
+        ];
+
+        $response = $this->actingAs($user, 'web')
+            ->get('/oauth/authorize?'.http_build_query($queryParams));
+
+        // Returns 403 from CheckClientAccess middleware with custom pending approval message
+        $response->assertStatus(403);
+        $response->assertSee('Your account is pending approval for this application.');
+
+        // Assert that the client_user pivot was auto-created with pending_approval
+        $pivot = $user->clients()->wherePivot('client_id', $this->client->id)->first();
+        $this->assertNotNull($pivot);
+        $this->assertEquals(UserStatus::PENDING_APPROVAL, $pivot->pivot->status);
+
+        // Assert that the email was queued to the super admin
+        Mail::assertQueued(NewUserRegistrationAdminMail::class, function ($mail) use ($admin, $user) {
+            return $mail->hasTo($admin->email) &&
+                   $mail->user->id === $user->id &&
+                   $mail->client->id === $this->client->id;
+        });
     }
 }

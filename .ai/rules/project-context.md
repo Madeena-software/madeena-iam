@@ -170,3 +170,47 @@ Defines user access rules to apps.
 - **Models**: Explicitly declare types for relations and database properties/attributes. Use mass assignment protections (`$fillable` or `$guarded`).
 - **Security**: Never expose auto-increment database IDs in URLs; use UUIDs or slugs. Utilize Laravel's query binding mechanisms to protect against SQL injections.
 - **Thin Controllers**: Delegate business logic to services, actions, or Eloquent models. Keep Http controllers/invokables clean.
+
+---
+
+## 8. RBAC Architecture (Hybrid Model)
+
+Madeena IAM implements a **Hybrid RBAC (Role-Based Access Control) Model**:
+- **Centralized IAM Responsibilities**:
+  - Manages overall user identity and authentication.
+  - Controls global client application access (whether a user is `approved`, `pending_approval`, `suspended`, or `blocked` for a specific app).
+  - Manages internal IAM administrative roles (such as `super_admin` who can manage clients, approve users, and audit logs).
+  - Spatie Permission tables are kept strictly for administrative roles internal to IAM.
+- **Decentralized Client App Responsibilities**:
+  - Domain-specific authorization (roles like "cashier", "warehouse_manager", "editor") and fine-grained permissions are managed independently within each client application's own database.
+  - Client apps query `GET /api/v1/user` to verify identity and retrieve application-level access status, then handle internal roles locally.
+
+### 8.1 API Documentation: Link Endpoint
+* **Endpoint**: `PATCH /api/v1/client-user/link`
+* **Headers**: `Authorization: Bearer <access_token>`
+* **Payload**:
+  ```json
+  {
+    "client_app_user_id": "string (max:255, required)"
+  }
+  ```
+* **Description**: Allows a client application to map its local user ID back to the central `client_user` pivot table after token exchange.
+* **Responses**:
+  - `200 OK`: Linked successfully.
+  - `400 Bad Request`: Invalid client credentials or token.
+  - `401 Unauthorized`: Unauthenticated.
+  - `404 Not Found`: User is not registered/associated with the client application.
+  - `422 Unprocessable Entity`: Validation failed.
+
+### 8.2 Cross-App SSO & Bidirectional ID Mapping Flow
+1. **User Registers on App A**: App A posts to `POST /api/v1/auth/register` including its local `client_app_user_id`.
+2. **User attempts SSO on App B**:
+   - The user triggers SSO into App B.
+   - Since no `client_user` pivot exists for App B, IAM **auto-creates** a pivot with status `pending_approval` and queues an email notification to `super_admin`s.
+   - The user is redirected to App B with `error=access_denied` (or receives 403 on standard login).
+3. **Admin Approves Access**:
+   - The `super_admin` approves the access request from the Filament panel.
+4. **User logs in successfully**:
+   - Next SSO attempt succeeds, App B gets the OAuth token.
+   - App B calls `GET /api/v1/user` to get user details (receives `client_app_user_id` as `null` since B hasn't linked its ID yet).
+   - App B creates its local user record, then calls `PATCH /api/v1/client-user/link` with its local user ID to complete the bidirectional mapping.
