@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path(env('FILAMENT_PATH', 'admin'))
             ->login(Login::class)
             ->sidebarCollapsibleOnDesktop()
             // ->renderHook(
