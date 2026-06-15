@@ -323,6 +323,9 @@ jobs:
           done
           echo "Queue worker running."
 
+          echo "===> Generating Passport keys if missing..."
+          docker exec "$CONTAINER" sh -c "if [ ! -f storage/app/private/oauth-private.key ]; then php artisan passport:keys --force; fi"
+
           docker exec "$CONTAINER" chown -R www-data:www-data storage bootstrap/cache || true
           docker exec "$CONTAINER" chmod -R 775 storage bootstrap/cache || true
 

@@ -47,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Passport::viewNamespace('passport');
+        Passport::loadKeysFrom(storage_path('app/private'));
 
         Relation::morphMap([
             'Company' => Owner::class,
