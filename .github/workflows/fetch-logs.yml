@@ -1,0 +1,14 @@
+name: Fetch Server Logs
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: self-hosted
+    steps:
+      - name: App Logs
+        run: |
+          docker service logs madeena-iam_app --tail 300 2>&1
+      - name: Nginx Logs
+        run: |
+          docker service logs madeena-iam_nginx --tail 100 2>&1
