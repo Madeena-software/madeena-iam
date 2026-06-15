@@ -6,9 +6,11 @@ jobs:
   fetch:
     runs-on: self-hosted
     steps:
-      - name: App Logs
+      - name: App Laravel Logs
         run: |
-          docker service logs madeena-iam_app --tail 300 2>&1
-      - name: Nginx Logs
-        run: |
-          docker service logs madeena-iam_nginx --tail 100 2>&1
+          CONTAINER=$(docker ps -qf name=madeena-iam_app | head -n1)
+          if [ -n "$CONTAINER" ]; then
+            docker exec $CONTAINER tail -n 200 /var/www/html/storage/logs/laravel.log 2>&1 || true
+          else
+            echo "Container not found"
+          fi
