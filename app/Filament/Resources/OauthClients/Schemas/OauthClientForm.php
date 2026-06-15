@@ -114,7 +114,7 @@ class OauthClientForm
                         function () {
                             return function (string $attribute, $value, \Closure $fail) {
                                 $uris = is_array($value) ? $value : array_map('trim', explode(',', $value));
-                                $allowedHttpIp = env('ALLOWED_HTTP_IP');
+                                $allowedHttpIp = config('app.allowed_http_ip');
                                 foreach ($uris as $uri) {
                                     if (! filter_var($uri, FILTER_VALIDATE_URL)) {
                                         $fail("The URI {$uri} is invalid.");

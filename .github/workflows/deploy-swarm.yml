@@ -86,6 +86,7 @@ jobs:
           AWS_BUCKET: ${{ secrets.MINIO_BUCKET }}
           AWS_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
           APP_VERSION: ${{ needs.build.outputs.app_version }}
+          ALLOWED_HTTP_IP: ${{ secrets.SSH_HOST }}
         run: |
           set -euo pipefail
 
@@ -217,6 +218,7 @@ jobs:
             printf 'AWS_BUCKET=%s\n' "$AWS_BUCKET"
             printf 'AWS_ENDPOINT=%s\n' "$AWS_ENDPOINT"
             printf 'APP_VERSION=%s\n' "$LIVE_VERSION"
+            printf 'ALLOWED_HTTP_IP=%s\n' "${ALLOWED_HTTP_IP:-}"
           } >> .env
 
           echo "===> Swarm manager preflight..."
