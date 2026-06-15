@@ -107,17 +107,18 @@ class OauthClientForm
                     ]),
                 Textarea::make('redirect_uris')
                     ->required()
-                    ->helperText('Enter one or more redirect URIs separated by commas. Must be valid HTTPS URLs unless using localhost.')
+                    ->helperText('Enter one or more redirect URIs separated by commas. Must be valid HTTPS URLs unless using localhost or the configured allowed IP.')
                     ->formatStateUsing(fn ($state) => is_array($state) ? implode(', ', $state) : $state)
                     ->dehydrateStateUsing(fn ($state) => is_array($state) ? $state : array_map('trim', explode(',', $state)))
                     ->rules([
                         function () {
                             return function (string $attribute, $value, \Closure $fail) {
                                 $uris = is_array($value) ? $value : array_map('trim', explode(',', $value));
+                                $allowedHttpIp = env('ALLOWED_HTTP_IP');
                                 foreach ($uris as $uri) {
                                     if (! filter_var($uri, FILTER_VALIDATE_URL)) {
                                         $fail("The URI {$uri} is invalid.");
-                                    } elseif (! str_starts_with($uri, 'https://') && ! str_starts_with($uri, 'http://localhost') && ! str_starts_with($uri, 'http://127.0.0.1')) {
+                                    } elseif (! str_starts_with($uri, 'https://') && ! str_starts_with($uri, 'http://localhost') && ! str_starts_with($uri, 'http://127.0.0.1') && ($allowedHttpIp ? ! str_starts_with($uri, "http://{$allowedHttpIp}") : true)) {
                                         $fail("The URI {$uri} must use HTTPS.");
                                     }
                                 }
