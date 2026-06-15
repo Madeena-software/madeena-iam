@@ -83,6 +83,7 @@
 - **Milestone 83**: Redesigned `register.blade.php` to mirror the premium design system from the login page, passing URL parameters as hidden input fields.
 - **Milestone 84**: Implemented Unit, Feature, and Playwright E2E tests for web registration.
 - **Milestone 85**: Successfully ran all 91 PHPUnit tests and 11 Playwright E2E tests, achieving a 100% pass rate.
+- **Milestone 86**: Diagnosed and resolved the Swarm production OAuth 500 error by updating `AppServiceProvider.php` to persist Passport keys in `storage/app/private`, and modified `deploy-swarm.yml` to automatically generate missing keys and strictly apply `600` file permissions to satisfy `league/oauth2-server` requirements. Verified `/oauth/authorize` successfully responds with a `302 Found` instead of a 500 error.
 
 ---
 

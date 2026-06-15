@@ -525,4 +525,24 @@ Implement the Central Identity Provider (IAM) Web Registration Page (`/register`
 
 
 
+## [2026-06-16] Session 25: Swarm Production Passport Key Fix
 
+### Objective
+Diagnose and resolve the 500 Server Error occurring during the OAuth authorization flow (`/oauth/authorize`) in the Swarm production deployment.
+
+### Actions Performed
+1. **Diagnosis**:
+   - Fetched logs from the `madeena-iam_app` container using the `fetch-logs.yml` GitHub Action.
+   - Identified a `LogicException: Invalid key supplied` originating from the `league/oauth2-server` package, indicating that the `oauth-private.key` was missing or inaccessible.
+2. **Passport Configuration Update**:
+   - Modified `AppServiceProvider.php` to use `Passport::loadKeysFrom(storage_path('app/private'));` to ensure the Passport keys are stored in a path that is persisted to the host via the Docker Swarm volumes.
+3. **Deployment Workflow Fixes**:
+   - Updated `.github/workflows/deploy-swarm.yml` to automatically generate the Passport keys using `php artisan passport:keys --force` if they do not exist in the persistent `storage/app/private` directory during deployment.
+   - Identified and resolved a secondary permission issue where a subsequent `chmod -R 775 storage` command altered the private key permissions. The `league/oauth2-server` package strictly requires `600` or `660` permissions for security.
+   - Added a specific `chmod 600` step for the `oauth-private.key` and `oauth-public.key` right after the global storage permissions are set.
+4. **Validation**:
+   - Triggered and verified the successful completion of the Swarm deployment.
+   - Validated the `/oauth/authorize` endpoint via curl, confirming the 500 error is resolved and the server correctly returns a `302 Found` redirect back to the SSO callback.
+
+### Results
+- ✅ **Success**: Swarm production deployment no longer deletes or corrupts Passport keys, and the SSO authorization endpoint functions correctly.
