@@ -525,7 +525,72 @@ Implement the Central Identity Provider (IAM) Web Registration Page (`/register`
 
 
 
-## [2026-06-16] Session 25: Swarm Production Passport Key Fix
+## [2026-06-11] Session 25: Passport UUID Migration & Auth Logs Context
+
+### Objective
+Migrate Passport tables to use UUIDs for `user_id` and enrich Authentication Logs with OAuth client and authentication type information.
+
+### Actions Performed
+1. **Migration & Schema**:
+   - Created migration `2026_06_11_135015_change_user_id_to_uuid_in_passport_tables.php` to update `oauth_auth_codes`, `oauth_access_tokens`, and `oauth_device_codes` user identifier columns to UUIDs.
+2. **Authentication Logs Context**:
+   - Updated the `AuthenticationLog` model to include a `client()` relationship.
+   - Enhanced Filament `AuthenticationLogsTable` and `AuthenticationLogForm` to capture and display `client.name` (Client App) and `auth_type` (Auth Type).
+
+### Results
+- ✅ **Success**: Passport fully supports UUID-based users, and authentication logs provide richer context regarding OAuth clients and auth types.
+
+## [2026-06-11] Session 26: Login Query Parameter Injection
+
+### Objective
+Preserve intended URL query parameters during the login flow.
+
+### Actions Performed
+1. **Context Injection**:
+   - Modified login request context to inject and preserve intended URL query parameters, ensuring smooth redirects post-authentication.
+
+### Results
+- ✅ **Success**: Query parameters are now retained across the login boundary.
+
+## [2026-06-15] Session 27: Configurable Filament Admin Path
+
+### Objective
+Make the Filament admin panel path configurable via an environment variable.
+
+### Actions Performed
+1. **Configuration Update**:
+   - Updated the Filament provider configuration to use `env('FILAMENT_PATH', 'admin')`.
+
+### Results
+- ✅ **Success**: The Filament admin path can now be securely customized per environment without hardcoding.
+
+## [2026-06-16] Session 28: HTTP Redirect URIs for Configurable IP
+
+### Objective
+Allow HTTP redirect URIs for a specific configurable IP address in the OAuth client creation form (to support local development and testing).
+
+### Actions Performed
+1. **Form Validation Update**:
+   - Modified validation rules in the OAuth client Filament form to allow `http://` schema specifically for an IP address configured via the `ALLOWED_HTTP_IP` environment variable.
+2. **Production Fix**:
+   - Fixed the `ALLOWED_HTTP_IP` configuration check in production to correctly evaluate the IP.
+
+### Results
+- ✅ **Success**: Developers can now register HTTP redirect URIs for the explicitly allowed IP.
+
+## [2026-06-16] Session 29: Production Diagnostics Workflows
+
+### Objective
+Add GitHub Actions workflows to fetch logs from the production Swarm environment for debugging.
+
+### Actions Performed
+1. **Workflow Creation**:
+   - Created the `.github/workflows/fetch-logs.yml` workflow to pull `laravel.log` and docker service logs from the production swarm managers.
+
+### Results
+- ✅ **Success**: Production logs can now be retrieved dynamically via GitHub Actions, aiding in remote debugging.
+
+## [2026-06-16] Session 30: Swarm Production Passport Key Fix
 
 ### Objective
 Diagnose and resolve the 500 Server Error occurring during the OAuth authorization flow (`/oauth/authorize`) in the Swarm production deployment.
@@ -546,3 +611,17 @@ Diagnose and resolve the 500 Server Error occurring during the OAuth authorizati
 
 ### Results
 - ✅ **Success**: Swarm production deployment no longer deletes or corrupts Passport keys, and the SSO authorization endpoint functions correctly.
+
+## [2026-06-16] Session 31: Temporary Superadmin Update Script
+
+### Objective
+Create and then remove a temporary script to force-update a superadmin password/role.
+
+### Actions Performed
+1. **Emergency Access**:
+   - Added a temporary script for emergency access to update the superadmin user (`96f2014`).
+2. **Cleanup**:
+   - Removed the script (`634b114`) immediately after use to maintain security.
+
+### Results
+- ✅ **Success**: Superadmin access restored and temporary scripts cleaned up.
