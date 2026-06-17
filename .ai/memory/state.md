@@ -90,6 +90,8 @@
 - **Milestone 90**: Created GitHub Actions workflow (`fetch-logs.yml`) to fetch production Swarm logs.
 - **Milestone 91**: Diagnosed and resolved the Swarm production OAuth 500 error by updating `AppServiceProvider.php` to persist Passport keys in `storage/app/private`, and modified `deploy-swarm.yml` to automatically generate missing keys and strictly apply `600` file permissions to satisfy `league/oauth2-server` requirements. Verified `/oauth/authorize` successfully responds with a `302 Found` instead of a 500 error.
 - **Milestone 92**: Temporarily added and then removed script to force-update superadmin for emergency access.
+- **Milestone 93**: Fixed the OAuth consent screen 500 error by applying the pivot logic to all flows.
+- **Milestone 94**: Enforced strictly 600 permissions for the Passport key files in the deployment workflow and removed output redirection from `npm run build` in the `Dockerfile` to improve logging visibility.
 
 ---
 

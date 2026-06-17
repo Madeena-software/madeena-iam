@@ -52,7 +52,10 @@
     "server-setup-deploy.yml",
     "server-admin-reset.yml",
     "tests.yml",
-    "update-changelog.yml"
+    "update-changelog.yml",
+    "diagnostics.yml",
+    "fetch-logs.yml",
+    "download-backup.yml"
   ],
   "testing": {
     "framework": "PHPUnit 12.5.12",

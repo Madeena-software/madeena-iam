@@ -625,3 +625,24 @@ Create and then remove a temporary script to force-update a superadmin password/
 
 ### Results
 - ✅ **Success**: Superadmin access restored and temporary scripts cleaned up.
+
+## [2026-06-16] Session 32: Fix OAuth consent screen 500 error
+### Objective
+Resolve the 500 Server Error occurring during the OAuth authorization flow (`/oauth/authorize`) by ensuring correct user-client pivot logic is applied to all authorization paths.
+### Actions Performed
+1. **Diagnosis & Logic Update**:
+   - Diagnosed that the `client_user` pivot logic was missing or improperly handling the relationship during authorization.
+   - Fixed the OAuth consent screen by applying the pivot logic to all flows (`57d4945`).
+### Results
+- ✅ **Success**: SSO callback 500 error resolved.
+
+## [2026-06-17] Session 33: Dockerfile Deployment Urgency and Optimizations
+### Objective
+Evaluate Dockerfile changes and improve logging output during the Swarm deployment.
+### Actions Performed
+1. **Permissions Fix**:
+   - Enforced strictly `600` permissions for the Passport key files in the deployment workflow to prevent deployment failures (`4eac61a`).
+2. **Build Optimization**:
+   - Removed output redirection from `npm run build` in the `Dockerfile` to improve visibility and logging during the build process (`cd7ed0b`).
+### Results
+- ✅ **Success**: Deployment visibility improved and strictly secure key permissions enforced.
