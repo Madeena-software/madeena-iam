@@ -329,6 +329,7 @@ jobs:
           docker exec "$CONTAINER" chown -R www-data:www-data storage bootstrap/cache || true
           docker exec "$CONTAINER" chmod -R 775 storage bootstrap/cache || true
           docker exec "$CONTAINER" chmod 600 storage/app/private/oauth-private.key storage/app/private/oauth-public.key 2>/dev/null || true
+          _sudo chmod 600 "$APP_STORAGE_HOST_PATH/app/private/oauth-private.key" "$APP_STORAGE_HOST_PATH/app/private/oauth-public.key" 2>/dev/null || true
 
           echo "===> Testing Nginx configuration..."
           _WAIT_NGINX=0
