@@ -33,7 +33,7 @@ COPY package.json package-lock.json vite.config.js ./
 COPY resources/ ./resources/
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm ci --no-audit --no-fund --loglevel=error \
-    && npm run build > /dev/null 2>&1
+    && npm run build
 
 # Stage 2: Base image (system deps + PHP extensions)
 FROM php:8.4-fpm AS base
