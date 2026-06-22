@@ -248,6 +248,7 @@ mkdir -p "${SCRIPT_DIR}/storage/enterprise_data_local"
 
 # Set proper permissions (775, NOT 777)
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+chmod 600 storage/app/private/oauth-*.key 2>/dev/null || true
 info "Permissions set: storage & bootstrap/cache → 775"
 
 # ─── SUMMARY ─────────────────────────────────────────────────────────────────

@@ -646,3 +646,15 @@ Evaluate Dockerfile changes and improve logging output during the Swarm deployme
    - Removed output redirection from `npm run build` in the `Dockerfile` to improve visibility and logging during the build process (`cd7ed0b`).
 ### Results
 - ✅ **Success**: Deployment visibility improved and strictly secure key permissions enforced.
+
+## [2026-06-23] Session 34: Fix OAuth authorization 500 Error
+
+### Objective
+Fix the 500 error on the OAuth authorization endpoint by correcting file permissions in the Docker entrypoint scripts.
+
+### Actions Performed
+1. **Permissions Fix**: Added `chmod 600 storage/app/private/oauth-*.key` immediately after the `chmod 775` command in `docker/entrypoint.sh` to prevent the container's startup from breaking the Passport keys' security constraints.
+2. **Template Updates**: Synchronized the fix to `templates/prod/standard-entrypoint.sh`, `deploy-local.sh`, and `templates/local/standard-deploy-local.sh`.
+
+### Results
+- ✅ **Success**: The Passport private key permissions are correctly enforced across container restarts and scaling events.

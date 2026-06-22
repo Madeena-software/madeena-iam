@@ -31,6 +31,7 @@ mkdir -p \
 rm -rf storage/framework/views/*.php storage/framework/cache/data/* bootstrap/cache/*.php
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+chmod 600 storage/app/private/oauth-*.key 2>/dev/null || true
 echo "[entrypoint] Storage directories scaffolded and cache cleared."
 
 if ! php -r '$paths=["storage/app","storage/framework/cache/data","storage/framework/sessions","storage/framework/views","storage/logs","bootstrap/cache"];foreach($paths as $p){if(!is_dir($p)||!is_writable($p)){fwrite(STDERR,"[entrypoint] Invalid or non-writable path: $p\n");exit(1);}}'; then
