@@ -429,7 +429,7 @@ jobs:
             failure_action="$(docker service inspect "$svc" --format='{{.Spec.UpdateConfig.FailureAction}}' 2>/dev/null || echo "")"
             rollback_order="$(docker service inspect "$svc" --format='{{.Spec.RollbackConfig.Order}}' 2>/dev/null || echo "")"
             expected="stop-first"
-            if [ "$svc" = "{{APP_NAME}}_app" ] || [ "$svc" = "{{APP_NAME}}_nginx" ]; then
+            if [ "$svc" = "{{APP_NAME}}_app" ]; then
               expected="start-first"
             fi
             if [ "$update_order" = "$expected" ] && [ "$failure_action" = "rollback" ] && [ "$rollback_order" = "$expected" ]; then
