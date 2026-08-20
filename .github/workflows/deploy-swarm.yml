@@ -255,13 +255,15 @@ jobs:
 
           echo "===> Deploying stack..."
           docker stack deploy \
+            --prune \
             --resolve-image changed \
             -c docker-compose.prod.yml madeena-iam
 
-          echo "===> Force updating app and queue services with new image..."
+          echo "===> Force updating services..."
           sleep 5
           docker service update --force --image "madeena-iam":latest madeena-iam_app || true
           docker service update --force --image "madeena-iam":latest madeena-iam_queue || true
+          docker service update --force madeena-iam_nginx || true
 
           echo "===> [1/3] Waiting for database to be healthy..."
           _WAIT_DB=0
