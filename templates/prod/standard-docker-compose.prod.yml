@@ -176,7 +176,10 @@ services:
         reservations:
           memory: 32M
     ports:
-      - "8012:80"
+      - target: 80
+        published: 8012
+        protocol: tcp
+        mode: host
     volumes:
       - ./nginx/conf.d/app.conf:/etc/nginx/conf.d/default.conf:ro
       - app_public:/var/www/html/public:ro
