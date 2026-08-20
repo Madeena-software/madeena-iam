@@ -203,9 +203,4 @@ volumes:
 networks:
   "madeena-iam_network":
     driver: overlay
-    driver_opts:
-      com.docker.network.driver.overlay.bind_interface: "0.0.0.0"
-      com.docker.network.driver.overlay.network_interface: "docker0"
-    ipam:
-      config:
-        - subnet: "10.0.12.0/24"
+    attachable: true
