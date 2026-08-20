@@ -41,11 +41,11 @@ Madeena IAM is a centralized Identity & Access Management (IAM) and Single Sign-
 
 ## 📚 Documentation Reference
 
-* **Product Requirements & Specifications:** [`docs/madeena_iam_prd.md`](file:///var/www/madeena-iam/docs/madeena_iam_prd.md)
-* **Production Architecture & Operational Invariants:** [`docs/production-architecture.md`](file:///var/www/madeena-iam/docs/production-architecture.md)
-* **Repository AI Delivery Contract:** [`.agents/AGENTS.md`](file:///var/www/madeena-iam/.agents/AGENTS.md)
-* **Software Delivery Lifecycle Protocol:** [`.agents/software-workflow.md`](file:///var/www/madeena-iam/.agents/software-workflow.md)
-* **Repository Context Map:** [`.agents/context/project.md`](file:///var/www/madeena-iam/.agents/context/project.md)
+* **Product Requirements & Specifications:** [`docs/madeena_iam_prd.md`](docs/madeena_iam_prd.md)
+* **Production Architecture & Operational Invariants:** [`docs/production-architecture.md`](docs/production-architecture.md)
+* **Repository AI Delivery Contract:** [`.agents/AGENTS.md`](.agents/AGENTS.md)
+* **Software Delivery Lifecycle Protocol:** [`.agents/software-workflow.md`](.agents/software-workflow.md)
+* **Repository Context Map:** [`.agents/context/project.md`](.agents/context/project.md)
 
 ---
 
@@ -102,6 +102,6 @@ To configure the workspace without starting the development server immediately:
 ## 🤖 Repository AI Delivery & Governance
 
 This repository utilizes the canonical `.agents/` software delivery framework.
-* Read [`.agents/AGENTS.md`](file:///var/www/madeena-iam/.agents/AGENTS.md) for role boundaries (Planner, Executor, Reviewer) and delivery governance.
-* Follow [`.agents/software-workflow.md`](file:///var/www/madeena-iam/.agents/software-workflow.md) for quality gates (B0–G10), traceability, and immutable baseline rules.
-* Orientation context is maintained at [`.agents/context/project.md`](file:///var/www/madeena-iam/.agents/context/project.md).
+* Read [`.agents/AGENTS.md`](.agents/AGENTS.md) for role boundaries (Planner, Executor, Reviewer) and delivery governance.
+* Follow [`.agents/software-workflow.md`](.agents/software-workflow.md) for quality gates (B0–G10), traceability, and immutable baseline rules.
+* Orientation context is maintained at [`.agents/context/project.md`](.agents/context/project.md).

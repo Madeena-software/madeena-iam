@@ -2,7 +2,7 @@
 # Madeena IAM (Identity & Access Management)
 
 > **Document ID**: PRD-IAM-001
-> **Status**: Approved Product Specification (Reconciled with Implementation Reality)
+> **Status**: Living Document — Reconciled with Implementation Reality
 > **Language**: en-US
 > **Applies to**: `madeena-iam` core product & API surfaces
 
@@ -353,9 +353,15 @@ erDiagram
 
 ## 6. Standards & Protocol Scope: OAuth2 vs OIDC
 
-### Current Verified Protocol Scope
-- **OAuth2 Standard**: Madeena IAM is an **OAuth2 Authorization Server** utilizing Laravel Passport (League OAuth2 Server). It supports the Authorization Code Grant, Client Credentials Grant, Personal Access Tokens, and Refresh Tokens.
-- **Token Format**: Access tokens are cryptographically signed JSON Web Tokens (JWT) signed using the RSA private key in `storage/app/private/oauth-private.key`.
+### Verified Protocol & Grant Scope
+- **Configured & Tested Product Grants**:
+  - **Authorization Code Grant**: Primary verified redirect SSO mechanism for client applications via `/oauth/authorize` and `/oauth/token`.
+  - **Personal Access Tokens**: Verified mechanism used by the custom direct API login endpoint (`/api/v1/auth/login`).
+  - **Refresh Tokens**: Revoked on user logout (`/api/v1/auth/logout` and `/logout`).
+- **Framework Capabilities vs Tested Product Flows**:
+  - Other OAuth2 grant types (such as Client Credentials Grant) are supported by the underlying Laravel Passport / League OAuth2 Server framework but are not configured or tested as active product flows in Madeena IAM.
+  - PKCE parameter handling is supported in web registration redirect flows, with the standard Authorization Code grant being the primary verified path.
+- **Token Format**: Access tokens are cryptographically signed JSON Web Tokens (JWT) signed using RSA keys in `storage/app/private/oauth-private.key`.
 
 ### Clarification on OpenID Connect (OIDC) Status
 - Full OpenID Connect (OIDC) provider specifications are **not** implemented in the current codebase.
