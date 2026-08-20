@@ -1,0 +1,164 @@
+name: Diagnose Production 502 Incident
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    name: Production Diagnostics (Read-Only)
+    runs-on: self-hosted
+    steps:
+      - name: A. Host Port 8012 Probing (/up and /admin)
+        run: |
+          echo "=== [A] Probing 127.0.0.1:8012 ==="
+          echo "--- curl /up ---"
+          curl -sv --max-time 10 http://127.0.0.1:8012/up || echo "curl /up exit code: $?"
+          echo ""
+          echo "--- curl /admin ---"
+          curl -sv --max-time 10 http://127.0.0.1:8012/admin || echo "curl /admin exit code: $?"
+          echo ""
+
+      - name: B. Swarm State & Stack Tasks
+        run: |
+          echo "=== [B] Swarm State & Tasks ==="
+          docker info --format 'Swarm State: {{.Swarm.LocalNodeState}} | Manager: {{.Swarm.ControlAvailable}}'
+          echo ""
+          echo "--- docker stack ls ---"
+          docker stack ls
+          echo ""
+          echo "--- docker stack ps madeena-iam (no trunc) ---"
+          docker stack ps madeena-iam --no-trunc || true
+          echo ""
+          echo "--- docker service ls ---"
+          docker service ls
+          echo ""
+          echo "--- docker service ps madeena-iam_nginx ---"
+          docker service ps madeena-iam_nginx --no-trunc || true
+          echo ""
+          echo "--- docker service ps madeena-iam_app ---"
+          docker service ps madeena-iam_app --no-trunc || true
+          echo ""
+
+      - name: C. Service Definitions (Sanitized)
+        run: |
+          echo "=== [C] Service Definitions ==="
+          echo "--- nginx service inspect ---"
+          docker service inspect madeena-iam_nginx --format '
+          Service Name: {{.Spec.Name}}
+          Networks: {{json .Spec.TaskTemplate.Networks}}
+          Endpoint Ports: {{json .Endpoint.Ports}}
+          Task Template Placement: {{json .Spec.TaskTemplate.Placement}}
+          ' || true
+          echo ""
+          echo "--- app service inspect ---"
+          docker service inspect madeena-iam_app --format '
+          Service Name: {{.Spec.Name}}
+          Networks: {{json .Spec.TaskTemplate.Networks}}
+          Task Template Placement: {{json .Spec.TaskTemplate.Placement}}
+          ' || true
+
+      - name: D. Nginx Service Logs
+        run: |
+          echo "=== [D] Nginx Service Logs (tail 200) ==="
+          docker service logs madeena-iam_nginx --tail=200 2>&1 || true
+
+      - name: E. App Service Logs & Laravel Logs
+        run: |
+          echo "=== [E] App Service Logs (tail 200) ==="
+          docker service logs madeena-iam_app --tail=200 2>&1 || true
+          echo ""
+          echo "--- Running App Container Laravel Logs ---"
+          APP_CONTAINER="$(docker ps -q -f name=madeena-iam_app -f status=running | head -n 1)"
+          if [ -n "$APP_CONTAINER" ]; then
+            echo "Inspecting app container: $APP_CONTAINER"
+            docker exec "$APP_CONTAINER" tail -n 100 /var/www/html/storage/logs/laravel.log 2>&1 || echo "No laravel.log found"
+          else
+            echo "No running app container found"
+          fi
+
+      - name: F. Production Network State & Subnet Overlaps
+        run: |
+          echo "=== [F] Network State ==="
+          echo "--- Host IPv4 Routes (ip -4 route) ---"
+          ip -4 route || true
+          echo ""
+          echo "--- Host IPv4 Addresses (ip -4 addr) ---"
+          ip -4 addr || true
+          echo ""
+          echo "--- docker network ls ---"
+          docker network ls
+          echo ""
+          echo "--- Docker Overlay Networks Inspect ---"
+          for net in $(docker network ls --filter driver=overlay -q); do
+            docker network inspect "$net" --format '
+            Network: {{.Name}} (ID: {{.Id}})
+            Driver: {{.Driver}} | Scope: {{.Scope}} | Internal: {{.Internal}} | Attachable: {{.Attachable}}
+            IPAM Subnets: {{range .IPAM.Config}}{{.Subnet}} (Gateway: {{.Gateway}}){{end}}
+            Containers: {{json .Containers}}
+            '
+          done
+
+      - name: G. Nginx & App Network Membership
+        run: |
+          echo "=== [G] Container Network Membership ==="
+          NGINX_CONTAINER="$(docker ps -q -f name=madeena-iam_nginx -f status=running | head -n 1)"
+          APP_CONTAINER="$(docker ps -q -f name=madeena-iam_app -f status=running | head -n 1)"
+          echo "Nginx container: $NGINX_CONTAINER"
+          if [ -n "$NGINX_CONTAINER" ]; then
+            docker inspect "$NGINX_CONTAINER" --format 'Nginx Networks: {{range $net, $v := .NetworkSettings.Networks}}{{$net}} (IP: {{$v.IPAddress}}) {{end}}'
+          fi
+          echo ""
+          echo "App container: $APP_CONTAINER"
+          if [ -n "$APP_CONTAINER" ]; then
+            docker inspect "$APP_CONTAINER" --format 'App Networks: {{range $net, $v := .NetworkSettings.Networks}}{{$net}} (IP: {{$v.IPAddress}}) {{end}}'
+          fi
+
+      - name: H. Service Discovery from Inside Nginx
+        run: |
+          echo "=== [H] Service Discovery inside Nginx ==="
+          NGINX_CONTAINER="$(docker ps -q -f name=madeena-iam_nginx -f status=running | head -n 1)"
+          if [ -n "$NGINX_CONTAINER" ]; then
+            echo "--- /etc/resolv.conf ---"
+            docker exec "$NGINX_CONTAINER" cat /etc/resolv.conf || true
+            echo ""
+            echo "--- /etc/nginx/conf.d/default.conf ---"
+            docker exec "$NGINX_CONTAINER" cat /etc/nginx/conf.d/default.conf || true
+            echo ""
+            echo "--- DNS resolution for 'app' ---"
+            docker exec "$NGINX_CONTAINER" getent hosts app || echo "getent hosts app failed"
+            docker exec "$NGINX_CONTAINER" nslookup app 127.0.0.11 || echo "nslookup app failed"
+            echo ""
+            echo "--- DNS resolution for 'madeena-iam_app' ---"
+            docker exec "$NGINX_CONTAINER" getent hosts madeena-iam_app || echo "getent hosts madeena-iam_app failed"
+            docker exec "$NGINX_CONTAINER" nslookup madeena-iam_app 127.0.0.11 || echo "nslookup madeena-iam_app failed"
+          else
+            echo "No running nginx container"
+          fi
+
+      - name: I. TCP Connectivity Nginx -> PHP-FPM :9000
+        run: |
+          echo "=== [I] TCP Connectivity from Nginx to PHP-FPM ==="
+          NGINX_CONTAINER="$(docker ps -q -f name=madeena-iam_nginx -f status=running | head -n 1)"
+          if [ -n "$NGINX_CONTAINER" ]; then
+            echo "--- Testing TCP to 'app:9000' ---"
+            docker exec "$NGINX_CONTAINER" nc -z -v -w 3 app 9000 || echo "nc to app:9000 failed"
+            echo "--- Testing TCP to 'madeena-iam_app:9000' ---"
+            docker exec "$NGINX_CONTAINER" nc -z -v -w 3 madeena-iam_app 9000 || echo "nc to madeena-iam_app:9000 failed"
+          else
+            echo "No running nginx container"
+          fi
+
+      - name: J. Verify PHP-FPM in App Container
+        run: |
+          echo "=== [J] PHP-FPM inside App Container ==="
+          APP_CONTAINER="$(docker ps -q -f name=madeena-iam_app -f status=running | head -n 1)"
+          if [ -n "$APP_CONTAINER" ]; then
+            echo "--- Checking fsockopen 127.0.0.1:9000 ---"
+            docker exec "$APP_CONTAINER" php -r '$s=@fsockopen("127.0.0.1",9000,$errno,$errstr,3); if($s){echo "PHP-FPM 127.0.0.1:9000 is LISTENING\n"; fclose($s);}else{echo "PHP-FPM connect failed: $errstr ($errno)\n";}'
+            echo "--- Checking fsockopen app:9000 ---"
+            docker exec "$APP_CONTAINER" php -r '$s=@fsockopen("app",9000,$errno,$errstr,3); if($s){echo "app:9000 reachable from app container\n"; fclose($s);}else{echo "app:9000 failed: $errstr ($errno)\n";}'
+            echo "--- Checking fsockopen madeena-iam_app:9000 ---"
+            docker exec "$APP_CONTAINER" php -r '$s=@fsockopen("madeena-iam_app",9000,$errno,$errstr,3); if($s){echo "madeena-iam_app:9000 reachable from app container\n"; fclose($s);}else{echo "madeena-iam_app:9000 failed: $errstr ($errno)\n";}'
+          else
+            echo "No running app container"
+          fi
