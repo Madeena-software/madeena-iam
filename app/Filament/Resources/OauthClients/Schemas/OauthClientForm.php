@@ -151,13 +151,13 @@ class OauthClientForm
                             return 'No logo uploaded.';
                         }
                         /** @var FilesystemAdapter $disk */
-                        $disk = Storage::disk('s3');
+                        $disk = Storage::disk('public');
 
                         return new HtmlString('<img src="'.$disk->url($record->app_logo_path).'" alt="App Logo" style="max-height: 100px; border-radius: 8px; border: 1px solid #374151;">');
                     }),
                 FileUpload::make('app_logo_path')
                     ->label('Upload App Logo')
-                    ->disk('s3')
+                    ->disk('public')
                     ->directory('logos')
                     ->visibility('public')
                     ->rules(['nullable', 'image', 'max:2048']),

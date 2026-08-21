@@ -193,7 +193,9 @@ Madeena IAM implements strict data separation between host-bound persistent data
    - `storage/framework/views` and `storage/framework/cache` remain local to the container to prevent cache corruption between concurrent tasks.
 
 3. **Object Storage (S3 / MinIO)**:
-   - User profile images, client application logos, and system backups utilize Laravel S3 storage drivers (`public` and `enterprise_backups` disks).
+   - User profile images and client application logos utilize Laravel's `public` S3 storage disk; system backups utilize the `enterprise_backups` disk.
+   - Public media retrieval is exposed through `GET /storage/{path}` strictly for allowlisted public namespaces (`logos/`) backed by the `public` disk.
+   - Private backup namespaces (`backups/`, `madeena-iam-backups/`, `enterprise_backups` disk) are not routable through public HTTP endpoints and fail closed (HTTP 404). Physical bucket sharing between public media and backups does not imply public HTTP accessibility.
 
 ---
 
@@ -208,7 +210,7 @@ The production deployment workflow ([`.github/workflows/deploy-swarm.yml`](../.g
 5. **Queue Worker**: Verifies `queue:work` command execution and graceful shutdown periods.
 6. **Storage Mounts**: Asserts that `storage/app` is mounted, `storage/framework/views` is writable and local, and root `/var/www/html/storage` is not mounted as a single block.
 7. **S3 Storage Connectivity**: Invokes `php artisan storage:check` to verify S3 bucket read/write operations.
-8. **Media Streaming Route**: Uploads a test probe to the `public` disk and verifies retrieval through `http://127.0.0.1:8012/storage/{probe}`.
+8. **Media Streaming Route**: Uploads a test probe to the `public` disk under the allowed public namespace (`logos/deploy-check-{timestamp}.txt`) and verifies retrieval through `http://127.0.0.1:8012/storage/logos/{probe}`.
 
 ### Production Incident Diagnostics (`diagnose-502.yml`)
 The read-only diagnostic workflow ([`.github/workflows/diagnose-502.yml`](../.github/workflows/diagnose-502.yml)) allows inspecting:

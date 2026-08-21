@@ -491,7 +491,7 @@ jobs:
           fi
 
           echo "8/8 /storage media streaming"
-          media_probe="deploy-check-$(date -u +%Y%m%d%H%M%S).txt"
+          media_probe="logos/deploy-check-$(date -u +%Y%m%d%H%M%S).txt"
           media_payload="madeena-cp-media-${media_probe}"
           docker exec -e MEDIA_PROBE="$media_probe" -e MEDIA_PAYLOAD="$media_payload" "$app_container" php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); Illuminate\Support\Facades\Storage::disk("public")->put(getenv("MEDIA_PROBE"), getenv("MEDIA_PAYLOAD"));'
           fetched="$(curl -fsS --max-time 10 "http://127.0.0.1:8012/storage/${media_probe}" || true)"

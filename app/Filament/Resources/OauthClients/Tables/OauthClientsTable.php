@@ -39,7 +39,7 @@ class OauthClientsTable
                     ->sortable(),
                 ImageColumn::make('app_logo_path')
                     ->label('App Logo')
-                    ->disk('s3')
+                    ->disk('public')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('description')
                     ->searchable()

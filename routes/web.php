@@ -29,12 +29,39 @@ Route::middleware('guest')->group(function () {
 
 Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::get('storage/{path}', function ($path) {
-    if (! Storage::disk('s3')->exists($path)) {
+Route::get('storage/{path}', function (string $path) {
+    $allowedPrefixes = ['logos/'];
+
+    $isAllowed = false;
+    foreach ($allowedPrefixes as $prefix) {
+        if (str_starts_with($path, $prefix) && strlen($path) > strlen($prefix)) {
+            $isAllowed = true;
+            break;
+        }
+    }
+
+    if (! $isAllowed) {
         abort(404);
     }
 
-    return Storage::disk('s3')->response($path);
+    if (str_contains($path, '\\') || str_contains($path, "\0")) {
+        abort(404);
+    }
+
+    $segments = explode('/', $path);
+    foreach ($segments as $segment) {
+        if ($segment === '' || $segment === '.' || $segment === '..') {
+            abort(404);
+        }
+    }
+
+    $disk = Storage::disk('public');
+
+    if (! $disk->exists($path)) {
+        abort(404);
+    }
+
+    return $disk->response($path);
 })->where('path', '.*');
 
 if (app()->environment('local')) {
