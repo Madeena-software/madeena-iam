@@ -116,7 +116,9 @@ The following operational invariants are observed in production:
 
 ## 6. Current Delivery State & Incident History
 
-- **Accepted Baseline**: `94d22541d3d6330e6c7156e49f0bb2e90df0df55` (Documentation reconciliation baseline).
+- **Last Accepted Implementation Baseline**: `be39763b73ca7ebbc59fecc4ab0be0aad78bc4a2` (`fix(swarm): set nginx update and rollback order to stop-first for host-mode port`).
+- **Documentation Remediation Lineage**: `94d22541d3d6330e6c7156e49f0bb2e90df0df55` → `8253878f2e48347322faa0e145809d2cf162b86c`.
+- **Current Documentation Review State**: Review Required (Awaiting Reviewer evaluation and acceptance).
 - **Incident Remediation Context**: During remediation of the 502 incident, diagnostics confirmed a separate/current Swarm rollout defect: nginx `start-first` replacement cannot converge when a single eligible node already owns the fixed host-mode port 8012 (Swarm reports `no suitable node (host-mode port already in use on 1 node)` and the replacement task remains Pending). Available diagnostic evidence does not establish that this rollout defect was necessarily the sole original cause of every earlier HTTP 502 observation.
 - **Resolution**: Setting `update_config.order: stop-first` resolved the confirmed deployment-convergence defect. Post-deploy verification (run `32376272592`) and diagnostic probing (run `32376637733`) confirmed healthy service convergence and `/up` endpoint availability.
 

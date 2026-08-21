@@ -159,10 +159,14 @@ Instead of duplicating user databases and authentication logic across multiple a
 - **Business Rules**:
   - Records login attempts, logout events, client IDs, IP addresses, user agents, authentication types, and status classification (`success`, `failed_password`, `invalid_client`, `blocked_app`).
 
-#### F-010: Centralized Sign-Out (Single Sign-Out)
-- **Description**: Invalidation of OAuth tokens and browser sessions upon logout.
+#### F-010: Centralized Logout & Token Revocation
+- **Description**: Invalidation of central IAM browser sessions and OAuth tokens upon logout.
 - **Routes**: `POST /api/v1/auth/logout`, `GET/POST /logout`
-- **Business Rules**: Revokes all active Passport access tokens and associated refresh tokens in `oauth_refresh_tokens`, invalidates web session, and regenerates CSRF tokens.
+- **Key Components**: `App\Http\Controllers\Api\V1\AuthController`, `App\Http\Controllers\Auth\LoginController`
+- **Business Rules**:
+  - Revokes all active Passport access tokens and associated refresh tokens in `oauth_refresh_tokens` for the authenticated user.
+  - Invalidates the central web session guard and regenerates CSRF tokens.
+  - *Scope Note*: Logout terminates the central IAM session and revokes IAM-issued tokens. It does not perform front-channel or back-channel Single Logout (SLO) callbacks to independently cached client application sessions.
 
 ---
 
